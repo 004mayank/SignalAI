@@ -16,8 +16,10 @@
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "@tailwindcss/typography": "^0.5.19",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
+    "fast-xml-parser": "^5.5.9",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "node-cron": "^4.2.1",

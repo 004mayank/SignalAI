@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/db";
-import { ArticleCategory, Prisma } from "@prisma/client";
+import { ArticleCategory, Prisma, SourceLayer, SourceType } from "@prisma/client";
 
 export type ArticleFilters = {
   category?: "All" | ArticleCategory;
+  sourceType?: SourceType;
+  layer?: SourceLayer;
   minRelevance?: number;
 };
 
@@ -20,6 +22,8 @@ export async function getArticles(filters: ArticleFilters = {}, userId?: string)
     }
   }
   if (filters.category && filters.category !== "All") where.category = filters.category;
+  if (filters.sourceType) where.sourceType = filters.sourceType;
+  if (filters.layer) where.layer = filters.layer;
   if (filters.minRelevance) where.finalScore = { gte: filters.minRelevance };
 
   return prisma.article.findMany({

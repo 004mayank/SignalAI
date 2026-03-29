@@ -6,15 +6,36 @@ import { ArticleCard } from "@/components/article-card";
 import { getArticles, getInsightOfTheDay, getTrendingNow } from "@/lib/data";
 
 export default async function FeedPage(props: {
-  searchParams: Promise<{ category?: string; min?: string }>;
+  searchParams: Promise<{ category?: string; min?: string; source_type?: string; layer?: string }>;
 }) {
   const sp = await props.searchParams;
   const allowed = ["Agents", "LLMs", "Infra", "UX", "Other"] as const;
   const category = allowed.find((c) => c === sp.category);
   const minRelevance = sp.min ? Number(sp.min) : 1;
 
+  const allowedSourceTypes = [
+    "rss",
+    "arxiv",
+    "github",
+    "huggingface",
+    "reddit",
+    "hn",
+    "producthunt",
+  ] as const;
+  const sourceType = allowedSourceTypes.find((t) => t === sp.source_type);
+
+  const allowedLayers = [
+    "research",
+    "labs",
+    "builder",
+    "community",
+    "startup",
+    "distribution",
+  ] as const;
+  const layer = allowedLayers.find((l) => l === sp.layer);
+
   const [articles, trending, insight] = await Promise.all([
-    getArticles({ category, minRelevance }),
+    getArticles({ category, minRelevance, sourceType, layer }),
     getTrendingNow(3),
     getInsightOfTheDay(),
   ]);

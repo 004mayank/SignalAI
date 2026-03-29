@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 
 const categories = ["All", "Agents", "LLMs", "Infra", "UX", "Other"] as const;
+const layers = ["", "builder", "research", "labs", "community", "startup", "distribution"] as const;
+const sourceTypes = ["", "rss", "github", "reddit", "arxiv", "hn", "huggingface", "producthunt"] as const;
 
 export function SidebarFilters() {
   const router = useRouter();
@@ -10,6 +12,8 @@ export function SidebarFilters() {
 
   const category = sp.get("category") ?? "All";
   const min = Number(sp.get("min") ?? "1");
+  const layer = sp.get("layer") ?? "";
+  const sourceType = sp.get("source_type") ?? "";
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(sp.toString());
@@ -40,6 +44,36 @@ export function SidebarFilters() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Layer</div>
+        <select
+          value={layer}
+          onChange={(e) => setParam("layer", e.target.value)}
+          className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          {layers.map((l) => (
+            <option key={l} value={l}>
+              {l === "" ? "All" : l}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Source type</div>
+        <select
+          value={sourceType}
+          onChange={(e) => setParam("source_type", e.target.value)}
+          className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          {sourceTypes.map((t) => (
+            <option key={t} value={t}>
+              {t === "" ? "All" : t}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>
