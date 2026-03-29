@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { embedText } from "@/server/services/embeddings";
-import { finalRelevanceScore, recencyScore, sourceWeight } from "@/server/services/scoring";
+import { engagementScore, finalRelevanceScore } from "@/server/services/scoring";
 
 export async function POST() {
   const samples = [
@@ -63,8 +63,8 @@ export async function POST() {
     const embedding = await embedText(`${s.title}\n\n${s.content}`);
     const finalScore = finalRelevanceScore({
       llmScore: s.llmScore,
-      sourceWeight: sourceWeight(s.source),
-      recencyScore: recencyScore(new Date()),
+      sourceWeight: 5,
+      engagementScore: engagementScore({ stars: 0, upvotes: 0, comments: 0 }),
     });
 
     await prisma.article.create({

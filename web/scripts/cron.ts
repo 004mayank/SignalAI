@@ -9,13 +9,15 @@ const log = pino({ level: process.env.LOG_LEVEL || "info" });
 async function tick() {
   const env = getEnv();
   const feeds = env.RSS_FEEDS?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
-  if (feeds.length === 0) {
-    log.warn("No RSS_FEEDS configured; skipping ingestion.");
-    return;
-  }
 
-  log.info({ feeds: feeds.length }, "Starting ingestion run");
-  const result = await runIngestion({ feeds, limitPerFeed: 15 });
+  const mode = feeds.length > 0 ? "rss" : "registry";
+  log.info({ mode, feeds: feeds.length }, "Starting ingestion run");
+
+  const result = await runIngestion({
+    feeds: feeds.length ? feeds : undefined,
+    limitPerSource: 15,
+  });
+
   log.info(result, "Finished ingestion run");
 }
 

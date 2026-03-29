@@ -27,6 +27,25 @@ enum TargetPersona {
   Founder
 }
 
+enum SourceType {
+  rss
+  arxiv
+  github
+  huggingface
+  reddit
+  hn
+  producthunt
+}
+
+enum SourceLayer {
+  research
+  labs
+  builder
+  community
+  startup
+  distribution
+}
+
 model Article {
   id                 String          @id @default(cuid())
   title              String
@@ -50,6 +69,13 @@ model Article {
   duplicateOfId      String?         @map("duplicate_of_id")
 
   source             String
+  sourceType         SourceType      @default(rss) @map("source_type")
+  layer              SourceLayer     @default(distribution)
+
+  engagementStars    Int?            @map("engagement_stars")
+  engagementUpvotes  Int?            @map("engagement_upvotes")
+  engagementComments Int?            @map("engagement_comments")
+
   url                String          @unique
 
   publishedAt        DateTime?       @map("published_at")
