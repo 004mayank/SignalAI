@@ -1,45 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { formatVelocity } from "@/server/services/trend-stats";
 
-// Basic trends: count articles by category + top "high relevance" in last 7 days.
 export async function GET() {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-  const byCategory = await prisma.article.groupBy({
-    by: ["category"],
-    _count: { _all: true },
-    where: { createdAt: { gte: since } },
-    // Prisma v6: order by count of the grouped field (equivalent to total count here)
-    orderBy: { _count: { category: "desc" } },
-  });
-
-  const top = await prisma.article.findMany({
-    where: { createdAt: { gte: since }, relevanceScore: { gte: 4 } },
-    orderBy: [{ relevanceScore: "desc" }, { createdAt: "desc" }],
-    take: 10,
+  // Return top trends by velocity + volume.
+  const trends = await prisma.trend.findMany({
+    orderBy: [{ velocity: "desc" }, { articleCount: "desc" }],
+    take: 50,
     select: {
-      id: true,
-      title: true,
-      source: true,
-      url: true,
-      category: true,
-      relevanceScore: true,
+      name: true,
       summary: true,
-      whyItMatters: true,
-      createdAt: true,
+      articleCount: true,
+      velocity: true,
+      category: true,
+      clusterId: true,
+      updatedAt: true,
     },
   });
 
-  const trendHighlights = byCategory.map((c) => ({
-    category: c.category,
-    count: c._count._all,
-    label: `${c.category} rising`,
-  }));
-
-  return NextResponse.json({
-    since: since.toISOString(),
-    trendHighlights,
-    byCategory,
-    top,
-  });
+  return NextResponse.json(
+    trends.map((t) => ({
+      name: t.name,
+      summary: t.summary,
+      article_count: t.articleCount,
+      velocity: formatVelocity(t.velocity),
+      category: t.category,
+      cluster_id: t.clusterId,
+      updated_at: t.updatedAt,
+    })),
+  );
 }

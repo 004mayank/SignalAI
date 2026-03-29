@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { Shell } from "@/components/shell";
 import { SidebarFilters } from "@/components/sidebar-filters";
 import { ArticleCard } from "@/components/article-card";
-import { getArticles } from "@/lib/data";
+import { getArticles, getInsightOfTheDay, getTrendingNow } from "@/lib/data";
 
 export default async function FeedPage(props: {
   searchParams: Promise<{ category?: string; min?: string }>;
@@ -13,10 +13,11 @@ export default async function FeedPage(props: {
   const category = allowed.find((c) => c === sp.category);
   const minRelevance = sp.min ? Number(sp.min) : 1;
 
-  const articles = await getArticles({
-    category,
-    minRelevance,
-  });
+  const [articles, trending, insight] = await Promise.all([
+    getArticles({ category, minRelevance }),
+    getTrendingNow(3),
+    getInsightOfTheDay(),
+  ]);
 
   return (
     <Shell>
@@ -29,6 +30,44 @@ export default async function FeedPage(props: {
               <p className="mt-1 text-sm text-zinc-500">
                 High-signal updates with AI summaries and actionable takeaways.
               </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Trending now
+              </div>
+              <div className="mt-3 space-y-3">
+                {trending.length === 0 ? (
+                  <div className="text-sm text-zinc-500">No trends yet. Ingest a few articles.</div>
+                ) : (
+                  trending.map((t) => (
+                    <div key={t.id} className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900/40">
+                      <div className="text-sm font-semibold">{t.name}</div>
+                      <div className="mt-1 text-xs text-zinc-500">
+                        {t.category} • {t.articleCount} articles
+                      </div>
+                      <div className="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                        {t.summary}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 lg:col-span-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Insight of the day
+              </div>
+              <div className="mt-3">
+                {insight ? (
+                  <ArticleCard article={insight} />
+                ) : (
+                  <div className="text-sm text-zinc-500">No articles yet.</div>
+                )}
+              </div>
             </div>
           </div>
 

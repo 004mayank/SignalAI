@@ -9,6 +9,9 @@ export const ArticleAIResultSchema = z.object({
   use_case: z.string().min(1),
   category: z.enum(["Agents", "LLMs", "Infra", "UX", "Other"]),
   relevance_score: z.number().int().min(1).max(5),
+  impact_level: z.enum(["High", "Medium", "Low"]),
+  actionable_takeaway: z.string().min(1),
+  target_persona: z.enum(["Dev", "PM", "Founder"]),
 });
 
 export type ArticleAIResult = z.infer<typeof ArticleAIResultSchema>;
@@ -30,6 +33,9 @@ export async function analyzeArticleWithLLM(params: {
       use_case: "Use this as input to roadmap decisions, experiments, or tech evaluation.",
       category: "Other",
       relevance_score: 3,
+      impact_level: "Medium",
+      actionable_takeaway: "Bookmark this and decide if it impacts your roadmap or infra choices.",
+      target_persona: "Dev",
     };
   }
 
@@ -41,7 +47,7 @@ export async function analyzeArticleWithLLM(params: {
   const user = `Title: ${params.title}\nSource: ${params.source}\nURL: ${params.url}\n\nContent:\n${truncate(
     params.content,
     6000,
-  )}\n\nReturn JSON with keys: tldr, what_happened, why_it_matters, use_case, category, relevance_score.`;
+  )}\n\nReturn JSON with keys: tldr, what_happened, why_it_matters, use_case, category, relevance_score, impact_level, actionable_takeaway, target_persona.`;
 
   // Use JSON mode to keep the output robust.
   const resp = await openai.responses.create({
@@ -67,6 +73,12 @@ export async function analyzeArticleWithLLM(params: {
               enum: ["Agents", "LLMs", "Infra", "UX", "Other"],
             },
             relevance_score: { type: "integer", minimum: 1, maximum: 5 },
+            impact_level: {
+              type: "string",
+              enum: ["High", "Medium", "Low"],
+            },
+            actionable_takeaway: { type: "string" },
+            target_persona: { type: "string", enum: ["Dev", "PM", "Founder"] },
           },
           required: [
             "tldr",
@@ -75,6 +87,9 @@ export async function analyzeArticleWithLLM(params: {
             "use_case",
             "category",
             "relevance_score",
+            "impact_level",
+            "actionable_takeaway",
+            "target_persona",
           ],
         },
       },

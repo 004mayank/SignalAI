@@ -22,9 +22,9 @@ export async function GET(req: Request) {
   const minRelevance = parsed.min_relevance ? Number(parsed.min_relevance) : undefined;
   const limit = parsed.limit ? Math.min(100, Math.max(1, Number(parsed.limit))) : 50;
 
-  const where: Prisma.ArticleWhereInput = {};
+  const where: Prisma.ArticleWhereInput = { duplicateOfId: null };
   if (parsed.category) where.category = parsed.category;
-  if (minRelevance) where.relevanceScore = { gte: minRelevance };
+  if (minRelevance) where.finalScore = { gte: minRelevance };
 
   const articles = await prisma.article.findMany({
     where,

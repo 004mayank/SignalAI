@@ -6,10 +6,21 @@ export type ArticleFilters = {
   minRelevance?: number;
 };
 
-export async function getArticles(filters: ArticleFilters = {}) {
-  const where: Prisma.ArticleWhereInput = {};
+export async function getArticles(filters: ArticleFilters = {}, userId?: string) {
+  const where: Prisma.ArticleWhereInput = { duplicateOfId: null };
+
+  if (userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (user?.ignoredCategories?.length) {
+      where.category = { notIn: user.ignoredCategories };
+    }
+    if (user?.likedCategories?.length && !filters.category) {
+      // Light personalization: boost liked categories by filtering to them when no explicit filter is set.
+      where.category = { in: user.likedCategories };
+    }
+  }
   if (filters.category && filters.category !== "All") where.category = filters.category;
-  if (filters.minRelevance) where.relevanceScore = { gte: filters.minRelevance };
+  if (filters.minRelevance) where.finalScore = { gte: filters.minRelevance };
 
   return prisma.article.findMany({
     where,
@@ -18,19 +29,23 @@ export async function getArticles(filters: ArticleFilters = {}) {
   });
 }
 
-export async function getTrends() {
-  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const grouped = await prisma.article.groupBy({
-    by: ["category"],
-    _count: { _all: true },
-    where: { createdAt: { gte: since } },
-    orderBy: { _count: { category: "desc" } },
+export async function getTrendingNow(limit = 3) {
+  return prisma.trend.findMany({
+    orderBy: [{ velocity: "desc" }, { articleCount: "desc" }],
+    take: limit,
   });
+}
 
-  const byCategory = grouped.map((g) => ({
-    category: g.category,
-    count: typeof g._count === "object" ? (g._count._all ?? 0) : 0,
-  }));
+export async function getInsightOfTheDay() {
+  return prisma.article.findFirst({
+    where: { duplicateOfId: null },
+    orderBy: [{ finalScore: "desc" }, { createdAt: "desc" }],
+  });
+}
 
-  return { since, byCategory };
+export async function getTrendsPage(limit = 50) {
+  return prisma.trend.findMany({
+    orderBy: [{ velocity: "desc" }, { articleCount: "desc" }],
+    take: limit,
+  });
 }
