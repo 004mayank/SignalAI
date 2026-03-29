@@ -1,11 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { Shell } from "@/components/shell";
-import Link from "next/link";
-import { getTrends } from "@/lib/data";
+import { getTrendsPage } from "@/lib/data";
 
 export default async function TrendsPage() {
-  const { since, byCategory } = await getTrends();
+  const trends = await getTrendsPage(50);
 
   return (
     <Shell>
@@ -13,36 +12,38 @@ export default async function TrendsPage() {
         <div>
           <h1 className="text-xl font-semibold">Trends</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Basic trend detection: what categories are most active in the last 7 days.
+            Clusters of related updates with velocity computed from the last 7 days vs the previous 7.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {byCategory.map((c) => (
-            <div
-              key={c.category}
-              className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
-            >
-              <div className="text-sm font-semibold">{c.category} rising</div>
-              <div className="mt-1 text-3xl font-bold">{c.count}</div>
-              <div className="mt-2 text-xs text-zinc-500">
-                Since {since.toISOString().slice(0, 10)}
+        {trends.length === 0 ? (
+          <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            No trends yet. Run ingestion to generate embeddings + clusters.
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {trends.map((t) => (
+              <div
+                key={t.id}
+                className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold">{t.name}</div>
+                    <div className="mt-1 text-xs text-zinc-500">
+                      {t.category} • {t.articleCount} articles
+                    </div>
+                  </div>
+                  <div className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-semibold text-white dark:bg-white dark:text-zinc-900">
+                    {Math.round(t.velocity * 100) > 0 ? "+" : ""}
+                    {Math.round(t.velocity * 100)}%
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-300">{t.summary}</p>
               </div>
-              <div className="mt-3">
-                <Link
-                  href={`/?category=${encodeURIComponent(c.category)}`}
-                  className="text-sm text-zinc-700 underline underline-offset-4 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
-                >
-                  View feed →
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          MVP note: trend detection is currently category aggregation. Next step is clustering by topic embeddings.
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </Shell>
   );

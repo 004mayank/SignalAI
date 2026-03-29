@@ -15,21 +15,100 @@ enum ArticleCategory {
   Other
 }
 
+enum ImpactLevel {
+  High
+  Medium
+  Low
+}
+
+enum TargetPersona {
+  Dev
+  PM
+  Founder
+}
+
 model Article {
-  id             String          @id @default(cuid())
-  title          String
-  content        String
-  summary        String
-  whatHappened   String          @map("what_happened")
-  whyItMatters   String          @map("why_it_matters")
-  useCase        String          @map("use_case")
-  category       ArticleCategory
-  relevanceScore Int             @map("relevance_score")
-  source         String
-  url            String          @unique
-  createdAt      DateTime        @default(now()) @map("created_at")
+  id                 String          @id @default(cuid())
+  title              String
+  content            String
+  summary            String
+  whatHappened       String          @map("what_happened")
+  whyItMatters       String          @map("why_it_matters")
+  useCase            String          @map("use_case")
+  actionableTakeaway String          @default("") @map("actionable_takeaway")
+  impactLevel        ImpactLevel     @default(Medium) @map("impact_level")
+  targetPersona      TargetPersona   @default(Dev) @map("target_persona")
+  category           ArticleCategory
+
+  // Scoring
+  llmScore           Int             @map("llm_score")
+  finalScore         Float           @map("final_score")
+
+  // Trend engine
+  embedding          Float[]         @map("embedding")
+  clusterId          String?         @map("cluster_id")
+  duplicateOfId      String?         @map("duplicate_of_id")
+
+  source             String
+  url                String          @unique
+
+  publishedAt        DateTime?       @map("published_at")
+  createdAt          DateTime        @default(now()) @map("created_at")
 
   @@index([createdAt])
-  @@index([category, relevanceScore])
+  @@index([category, finalScore])
+  @@index([clusterId])
   @@map("articles")
+}
+
+model TrendCluster {
+  id        String        @id @map("cluster_id")
+  category  ArticleCategory
+  centroid  Float[]       @map("centroid")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@map("trend_clusters")
+}
+
+model Trend {
+  id           String          @id @default(cuid())
+  clusterId    String          @unique @map("cluster_id")
+  category     ArticleCategory
+  name         String
+  summary      String
+  velocity     Float           @default(0)
+  articleCount Int             @default(0) @map("article_count")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  stats        TrendStat[]
+
+  @@index([category])
+  @@index([velocity])
+  @@map("trends")
+}
+
+model TrendStat {
+  id           String   @id @default(cuid())
+  trendId      String   @map("trend_id")
+  date         DateTime
+  articleCount Int      @map("article_count")
+
+  trend        Trend    @relation(fields: [trendId], references: [id], onDelete: Cascade)
+
+  @@unique([trendId, date])
+  @@index([date])
+  @@map("trend_stats")
+}
+
+model User {
+  id               String           @id
+  likedCategories  ArticleCategory[] @default([]) @map("liked_categories")
+  ignoredCategories ArticleCategory[] @default([]) @map("ignored_categories")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  @@map("users")
 }

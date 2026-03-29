@@ -11,7 +11,10 @@ export function ArticleCard(props: {
     whyItMatters: string;
     useCase: string;
     category: string;
-    relevanceScore: number;
+    finalScore: number;
+    impactLevel: string;
+    targetPersona: string;
+    actionableTakeaway: string;
     createdAt: Date;
   };
 }) {
@@ -22,7 +25,9 @@ export function ArticleCard(props: {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <Badge>{a.category}</Badge>
-            <Badge variant="muted">Relevance {a.relevanceScore}/5</Badge>
+            <Badge variant="muted">Score {a.finalScore.toFixed(1)}/5</Badge>
+            <Badge variant="muted">Impact {a.impactLevel}</Badge>
+            <Badge variant="muted">For {a.targetPersona}</Badge>
             <span className="text-xs text-zinc-500">{a.source}</span>
           </div>
           <h3 className="mt-2 line-clamp-2 text-base font-semibold text-zinc-900 dark:text-zinc-100">
@@ -45,6 +50,10 @@ export function ArticleCard(props: {
         <div>
           <div className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Use case</div>
           <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{a.useCase}</p>
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Actionable takeaway</div>
+          <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{a.actionableTakeaway}</p>
         </div>
       </div>
     </div>
