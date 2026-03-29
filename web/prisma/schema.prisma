@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArticleCategory {
+  Agents
+  LLMs
+  Infra
+  UX
+  Other
+}
+
+model Article {
+  id             String          @id @default(cuid())
+  title          String
+  content        String
+  summary        String
+  whatHappened   String          @map("what_happened")
+  whyItMatters   String          @map("why_it_matters")
+  useCase        String          @map("use_case")
+  category       ArticleCategory
+  relevanceScore Int             @map("relevance_score")
+  source         String
+  url            String          @unique
+  createdAt      DateTime        @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([category, relevanceScore])
+  @@map("articles")
+}
