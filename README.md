@@ -1,110 +1,129 @@
-# TrendLens - AI Trend Intelligence Platform
+# SignalAI — AI Trend Intelligence Platform (MVP)
 
-TrendLens is a full-stack AI-powered system that tracks, filters, and analyzes emerging trends across the AI ecosystem - and transforms them into actionable insights.
+SignalAI aggregates, filters, and analyzes updates across the AI ecosystem and converts them into **actionable insights**.
 
-Instead of drowning in fragmented updates, TrendLens answers:
-> "What’s happening in AI - and why does it matter?"
-
----
-
-## Who Is This For?
-
-TrendLens is built for anyone trying to stay ahead in AI:
-
-- Developers → discover tools, frameworks, and repos  
-- Product Managers → identify product opportunities  
-- Founders → spot startup ideas and market shifts  
-- Researchers → track applied impact of research  
-- AI Enthusiasts → stay updated without noise  
+This repo contains a production-ready MVP:
+- **Next.js (App Router) + Tailwind** dashboard UI
+- **PostgreSQL + Prisma** data model
+- **OpenAI-powered** summarization + classification (with safe fallback when no key is set)
+- Basic **trend detection** (category aggregation)
 
 ---
 
-## What Makes It Different?
+## Folder structure
 
-Most platforms focus on **information**.
-
-TrendLens focuses on **intelligence**:
-- Filters noise
-- Connects signals across sources
-- Translates updates into insights
-
----
-
-## Core Features
-
-### Unified AI Feed
-Aggregates updates from:
-- Research (papers)
-- Big tech announcements
-- Startups & launches
-- Developer ecosystems
-- Online communities
+```
+SignalAI/
+  web/                  # Next.js app (UI + API routes)
+    prisma/             # Prisma schema + migrations
+    src/
+      app/
+        api/            # /api/articles, /api/trends, /api/ingest, /api/seed
+        trends/         # /trends page
+      components/       # UI building blocks
+      lib/              # db, env, ai helpers
+```
 
 ---
 
-### AI-Powered Insights
-Each update is transformed into:
+## Core MVP features
+
+### 1) AI Feed (`/`)
+Shows a card-based feed:
+- Title, source, category
 - TL;DR
-- What happened
 - Why it matters
-- Real-world implications
+- Use case
+- Relevance score (1–5)
+
+### 2) Filtering
+- Filter by category
+- Filter by minimum relevance
+
+### 3) Trends (`/trends`)
+- Counts and highlights by category (last 7 days)
+
+### 4) Ingestion (mock or real)
+- `POST /api/seed` → inserts sample records
+- `POST /api/ingest` → pulls RSS feeds, summarizes/classifies, stores into Postgres
 
 ---
 
-### Trend Detection Engine
-- Groups related updates
-- Identifies emerging themes
-- Tracks momentum over time
+## API endpoints
+
+- `GET /api/articles?category=Agents&min_relevance=3&limit=50`
+- `GET /api/trends`
+- `POST /api/seed`
+- `POST /api/ingest` (reads `RSS_FEEDS` or accepts `{ feeds: [...], limit?: number }`)
 
 ---
 
-### Opportunity Layer
-Generates:
-- Product ideas
-- Startup opportunities
-- Use cases
+## Database schema
+
+Table: `articles`
+- `id`
+- `title`
+- `content`
+- `summary`
+- `what_happened`
+- `why_it_matters`
+- `use_case`
+- `category`
+- `relevance_score`
+- `source`
+- `url`
+- `created_at`
 
 ---
 
-### Personalization (Upcoming)
-- Learns what you care about
-- Adapts feed accordingly
+## Run locally
+
+### 1) Setup env
+
+```bash
+cd web
+cp .env.example .env
+```
+
+Update `DATABASE_URL` to your local Postgres.
+
+Optional (for real AI processing):
+- set `OPENAI_API_KEY`
+- optionally set `OPENAI_MODEL` (default: `gpt-4.1-mini`)
+
+### 2) Install deps
+
+```bash
+cd web
+npm install
+```
+
+### 3) Migrate DB
+
+```bash
+npm run db:migrate
+```
+
+### 4) Seed data (optional)
+
+```bash
+curl -X POST http://localhost:3000/api/seed
+```
+
+### 5) Start
+
+```bash
+npm run dev
+```
+
+Open:
+- http://localhost:3000 (Feed)
+- http://localhost:3000/trends (Trends)
 
 ---
-## Roadmap
 
-### v1
-- [x] Aggregation + summarization
-- [x] Basic UI dashboard
+## Notes / next steps
 
-### v2
-- [ ] Trend clustering
-- [ ] Personalization
-- [ ] Weekly reports
-
-### v3
-- [ ] Real-time pipeline
-- [ ] Public API
-- [ ] Browser extension
-
----
-
-## Vision
-
-TrendLens aims to become:
-
-> **The intelligence layer for navigating the AI ecosystem.**
-
----
-
-## Contributing
-
-Contributions, ideas, and feedback are welcome.
-
----
-
-## Contact
-
-Built by Mayank Malviya
-
-If you're building in AI - would love to connect.
+- Trend detection can evolve from category aggregation → topic clustering via embeddings + vector DB.
+- Ingestion can move from manual endpoint to a scheduled job (cron/queue).
+- Add auth + personalization once the core signal quality is validated.
