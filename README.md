@@ -1,4 +1,4 @@
-# SignalAI — AI Trend Intelligence Platform (MVP)
+# SignalAI - AI Trend Intelligence Platform (MVP)
 
 SignalAI aggregates, filters, and analyzes updates across the AI ecosystem and converts them into **actionable insights**.
 
