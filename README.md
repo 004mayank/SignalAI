@@ -1,129 +1,176 @@
-# SignalAI — AI Trend Intelligence Platform (MVP)
+# SignalAI — AI Trend Intelligence Platform (v2)
 
-SignalAI aggregates, filters, and analyzes updates across the AI ecosystem and converts them into **actionable insights**.
+SignalAI is an **AI decision intelligence system** that aggregates updates across the AI ecosystem, filters noise, extracts structured insights, and detects emerging trends.
 
-This repo contains a production-ready MVP:
+This repo upgrades the original MVP (feed + summaries) into a **multi-source intelligence system** with:
 - **Next.js (App Router) + Tailwind** dashboard UI
-- **PostgreSQL + Prisma** data model
-- **OpenAI-powered** summarization + classification (with safe fallback when no key is set)
-- Basic **trend detection** (category aggregation)
+- **PostgreSQL + Prisma** (articles + trends + stats)
+- **OpenAI** summarization/classification + **embeddings**
+- **Multi-source ingestion** via a centralized **Source Registry** (RSS, arXiv, GitHub, Reddit, Hacker News, Product Hunt, Hugging Face)
+- **Trend engine**: embeddings + cosine similarity clustering + **velocity** (last 7d vs previous 7d)
 
 ---
 
-## Folder structure
+## Folder structure (key)
 
 ```
 SignalAI/
-  web/                  # Next.js app (UI + API routes)
-    prisma/             # Prisma schema + migrations
+  web/
+    prisma/schema.prisma
+    scripts/
+      cron.ts                    # node-cron ingestion worker
     src/
       app/
-        api/            # /api/articles, /api/trends, /api/ingest, /api/seed
-        trends/         # /trends page
-      components/       # UI building blocks
-      lib/              # db, env, ai helpers
+        api/
+          ingest/route.ts         # POST /api/ingest
+          articles/route.ts       # GET /api/articles
+          trends/route.ts         # GET /api/trends
+          report/weekly/route.ts  # GET /api/report/weekly
+          user/preferences/route.ts
+      server/
+        services/                 # AI + ingestion pipeline + scoring + trend engine
+        sources/                  # registry + per-source handlers + normalization
 ```
 
 ---
 
-## Core MVP features
+## Core features
 
-### 1) AI Feed (`/`)
-Shows a card-based feed:
-- Title, source, category
-- TL;DR
-- Why it matters
-- Use case
-- Relevance score (1–5)
+### Feed (`/`)
+- High-signal feed cards with:
+  - TL;DR, why it matters, use case
+  - impact level, target persona, actionable takeaway
+  - final score (hybrid scoring)
 
-### 2) Filtering
-- Filter by category
-- Filter by minimum relevance
+### Trends (`/trends`)
+- Trend cards from real clustering:
+  - name + summary (LLM-generated per cluster)
+  - article count
+  - velocity % (last 7 days vs previous 7 days)
 
-### 3) Trends (`/trends`)
-- Counts and highlights by category (last 7 days)
-
-### 4) Ingestion (mock or real)
-- `POST /api/seed` → inserts sample records
-- `POST /api/ingest` → pulls RSS feeds, summarizes/classifies, stores into Postgres
+### Filters
+- Category
+- Minimum relevance
+- **Layer** (builder/research/community/etc.)
+- **Source type** (rss/github/reddit/arxiv/hn/etc.)
 
 ---
 
-## API endpoints
+## API
 
-- `GET /api/articles?category=Agents&min_relevance=3&limit=50`
+### Articles
+- `GET /api/articles?category=Agents&min_relevance=3&source_type=github&layer=builder&limit=50`
+
+### Trends
 - `GET /api/trends`
-- `POST /api/seed`
-- `POST /api/ingest` (reads `RSS_FEEDS` or accepts `{ feeds: [...], limit?: number }`)
+
+Returns:
+```json
+[
+  {
+    "name": "AI Agents for Workflow Automation",
+    "summary": "...",
+    "article_count": 12,
+    "velocity": "+35%",
+    "category": "Agents"
+  }
+]
+```
+
+### Ingestion
+- `POST /api/ingest`
+
+**Backward-compatible RSS mode** (existing MVP behavior):
+- If `RSS_FEEDS` is set → ingests RSS feeds
+- Or pass body: `{ "feeds": ["..."], "limit": 10 }`
+
+**Multi-source registry mode**:
+- `{ "use_registry": true, "limit": 10 }`
+- Optional: `{ "use_registry": true, "source_names": ["GitHub AI Trending", "arXiv AI"], "limit": 10 }`
+
+### Weekly report
+- `GET /api/report/weekly`
+
+### User preferences (light personalization)
+- `GET /api/user/preferences` (uses header `x-user-id`, defaults to `demo`)
+- `PUT /api/user/preferences`
 
 ---
 
-## Database schema
+## Source Registry
 
-Table: `articles`
-- `id`
-- `title`
-- `content`
-- `summary`
-- `what_happened`
-- `why_it_matters`
-- `use_case`
-- `category`
-- `relevance_score`
-- `source`
-- `url`
-- `created_at`
+Central config lives in:
+- `web/src/server/sources/registry.ts`
+
+Each source defines:
+- `name`, `type`, `url`, `weight` (1–5), `layer`
+
+---
+
+## Scoring
+
+Hybrid scoring:
+```
+final_score =
+  0.5 * llm_score +
+  0.3 * source_weight +
+  0.2 * engagement_score
+```
+
+Engagement is derived from stars/upvotes/comments when available.
 
 ---
 
 ## Run locally
 
 ### 1) Setup env
-
 ```bash
 cd web
 cp .env.example .env
 ```
 
-Update `DATABASE_URL` to your local Postgres.
+Required:
+- `DATABASE_URL`
 
-Optional (for real AI processing):
-- set `OPENAI_API_KEY`
-- optionally set `OPENAI_MODEL` (default: `gpt-4.1-mini`)
+Optional:
+- `OPENAI_API_KEY` (enables real summaries + embeddings)
+- `OPENAI_MODEL` (default: `gpt-4.1-mini`)
+- `OPENAI_EMBEDDING_MODEL` (default: `text-embedding-3-small`)
+- `RSS_FEEDS` (comma-separated RSS URLs)
+- `GITHUB_TOKEN` (recommended to avoid rate limits)
 
 ### 2) Install deps
-
 ```bash
 cd web
 npm install
 ```
 
 ### 3) Migrate DB
-
 ```bash
 npm run db:migrate
 ```
 
-### 4) Seed data (optional)
-
+### 4) Seed / ingest
 ```bash
 curl -X POST http://localhost:3000/api/seed
+curl -X POST http://localhost:3000/api/ingest
+# or
+curl -X POST http://localhost:3000/api/ingest -H 'content-type: application/json' -d '{"use_registry":true,"limit":10}'
 ```
 
-### 5) Start
-
+### 5) Start web
 ```bash
 npm run dev
 ```
 
-Open:
-- http://localhost:3000 (Feed)
-- http://localhost:3000/trends (Trends)
+### 6) (Optional) Run scheduled ingestion worker
+```bash
+npm run worker:ingest
+# runs immediately + then every 6h (configurable via INGEST_CRON)
+```
 
 ---
 
-## Notes / next steps
-
-- Trend detection can evolve from category aggregation → topic clustering via embeddings + vector DB.
-- Ingestion can move from manual endpoint to a scheduled job (cron/queue).
-- Add auth + personalization once the core signal quality is validated.
+## Notes
+- Product Hunt + Hugging Face ingestion is best-effort HTML parsing (no stable unauth public API). For production reliability, swap to official APIs / authenticated endpoints.
+- For scale, upgrade embeddings storage to pgvector (index + SQL cosine similarity).
