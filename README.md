@@ -1,4 +1,4 @@
-# SignalAI — AI Trend Intelligence Platform (v2)
+# SignalAI - AI Trend Intelligence Platform (v2)
 
 SignalAI is an **AI decision intelligence system** that aggregates updates across the AI ecosystem, filters noise, extracts structured insights, and detects emerging trends.
 
@@ -11,7 +11,7 @@ This repo upgrades the original MVP (feed + summaries) into a **multi-source int
 
 ---
 
-## Folder structure (key)
+## Folder structure
 
 ```
 SignalAI/
