@@ -56,5 +56,5 @@ export async function GET(req: Request) {
     take: limit,
   });
 
-  return NextResponse.json({ articles });
+  return NextResponse.json({ articles, demo: false });
 }

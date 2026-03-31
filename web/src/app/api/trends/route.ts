@@ -27,6 +27,7 @@ export async function GET() {
       category: t.category,
       cluster_id: t.clusterId,
       updated_at: t.updatedAt,
+      demo: false,
     })),
   );
 }
