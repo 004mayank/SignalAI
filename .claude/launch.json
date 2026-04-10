@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Web (Next.js dev)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "Ingestion worker",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "worker:ingest"],
+      "port": null
+    }
+  ]
+}
