@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { NewsletterSubscribe } from "@/components/newsletter-subscribe";
 
 const categories = ["All", "Agents", "LLMs", "Infra", "UX", "Other"] as const;
 
@@ -56,6 +57,7 @@ export function AppSidebar({ showFilters = true }: Props) {
       <div className="mt-6 space-y-1">
         {navItem("/", "Home")}
         {navItem("/trends", "Trends")}
+        {navItem("/newsletter", "Newsletter")}
       </div>
 
       {showFilters ? (
@@ -98,13 +100,14 @@ export function AppSidebar({ showFilters = true }: Props) {
             />
           </div>
 
-          <div className="mt-6 rounded-xl border border-white/5 bg-white/5 p-3 text-xs text-zinc-300">
-            Tip: ingest real sources via <span className="font-mono">POST /api/ingest</span>.
-          </div>
         </div>
       ) : null}
 
-      <div className="mt-10 text-[11px] text-zinc-600">© 2026 SignalAI</div>
+      <div className="mt-6">
+        <NewsletterSubscribe />
+      </div>
+
+      <div className="mt-6 text-[11px] text-zinc-600">© 2026 SignalAI</div>
     </aside>
   );
 }

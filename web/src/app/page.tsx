@@ -22,6 +22,7 @@ export default async function FeedPage(props: {
     "reddit",
     "hn",
     "producthunt",
+    "twitter",
   ] as const;
   const sourceType = allowedSourceTypes.find((t) => t === sp.source_type);
 

@@ -8,6 +8,22 @@ import { engagementScore, finalRelevanceScore } from "@/server/services/scoring"
 import { SOURCES, type SourceConfig } from "@/server/sources/registry";
 import { ingestSource } from "@/server/sources/ingest";
 
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt === retries) throw err;
+      await sleep(2 ** attempt * 1000);
+    }
+  }
+  throw new Error("unreachable");
+}
+
 export async function runIngestion(params?: {
   // Backward compatible: RSS feeds list
   feeds?: string[];
@@ -34,9 +50,12 @@ export async function runIngestion(params?: {
   let skipped = 0;
   const errors: { source: string; error: string }[] = [];
 
+  const affectedClusterIds = new Set<string>();
+
   for (const source of sources) {
+    const runAt = new Date();
     try {
-      const normalized = await ingestSource(source, limit);
+      const normalized = await fetchWithRetry(() => ingestSource(source, limit));
       fetched += normalized.length;
 
       for (const item of normalized) {
@@ -149,19 +168,41 @@ export async function runIngestion(params?: {
 
         await updateClusterCentroid(clusterId);
         await upsertTrendForCluster({ clusterId, category: ai.category });
-
-        const trend = await prisma.trend.findUnique({ where: { clusterId } });
-        if (trend) {
-          await upsertTodayTrendStat(trend.id, clusterId);
-          const v = await computeVelocityPercent(trend.id);
-          await prisma.trend.update({ where: { id: trend.id }, data: { velocity: v } });
-        }
+        affectedClusterIds.add(clusterId);
 
         created++;
       }
+
+      // Record successful source health
+      await prisma.sourceHealth.upsert({
+        where: { sourceName: source.name },
+        create: { sourceName: source.name, lastRunAt: runAt, lastSuccessAt: runAt, errorCount: 0 },
+        update: { lastRunAt: runAt, lastSuccessAt: runAt, errorCount: 0, lastError: null },
+      });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       errors.push({ source: source.name, error: msg });
+
+      // Record failed source health
+      await prisma.sourceHealth.upsert({
+        where: { sourceName: source.name },
+        create: { sourceName: source.name, lastRunAt: runAt, errorCount: 1, lastError: msg },
+        update: {
+          lastRunAt: runAt,
+          errorCount: { increment: 1 },
+          lastError: msg,
+        },
+      }).catch(() => {}); // don't let health tracking crash the loop
+    }
+  }
+
+  // Batch velocity update for all affected clusters
+  for (const clusterId of affectedClusterIds) {
+    const trend = await prisma.trend.findUnique({ where: { clusterId } });
+    if (trend) {
+      await upsertTodayTrendStat(trend.id, clusterId);
+      const v = await computeVelocityPercent(trend.id);
+      await prisma.trend.update({ where: { id: trend.id }, data: { velocity: v } });
     }
   }
 

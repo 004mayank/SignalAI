@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Article } from "@prisma/client";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -10,7 +9,19 @@ function scoreLabel(score: number) {
   return `${s.toFixed(1)}/5`;
 }
 
-export function TrendingGrid(props: { articles: Article[] }) {
+type ArticleSummary = {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  finalScore: number;
+  source: string;
+  sourceType: string;
+  targetPersona: string;
+  url: string;
+};
+
+export function TrendingGrid(props: { articles: ArticleSummary[] }) {
   const items = [...props.articles]
     .sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0))
     .slice(0, 5);

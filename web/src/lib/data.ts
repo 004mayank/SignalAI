@@ -1,15 +1,45 @@
 import { prisma } from "@/lib/db";
 import { ArticleCategory, Prisma, SourceLayer, SourceType } from "@prisma/client";
 
+const ARTICLE_SELECT = {
+  id: true,
+  title: true,
+  summary: true,
+  whatHappened: true,
+  whyItMatters: true,
+  useCase: true,
+  actionableTakeaway: true,
+  impactLevel: true,
+  targetPersona: true,
+  category: true,
+  llmScore: true,
+  finalScore: true,
+  clusterId: true,
+  source: true,
+  sourceType: true,
+  layer: true,
+  engagementStars: true,
+  engagementUpvotes: true,
+  engagementComments: true,
+  url: true,
+  publishedAt: true,
+  createdAt: true,
+} as const;
+
 export type ArticleFilters = {
   category?: "All" | ArticleCategory;
   sourceType?: SourceType;
   layer?: SourceLayer;
   minRelevance?: number;
+  tier?: "free" | "pro";
 };
 
 export async function getArticles(filters: ArticleFilters = {}, userId?: string) {
-  const where: Prisma.ArticleWhereInput = { duplicateOfId: null };
+  const freeGateCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const where: Prisma.ArticleWhereInput = {
+    duplicateOfId: null,
+    ...(filters.tier !== "pro" ? { publishedAt: { lt: freeGateCutoff } } : {}),
+  };
 
   if (userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -17,7 +47,6 @@ export async function getArticles(filters: ArticleFilters = {}, userId?: string)
       where.category = { notIn: user.ignoredCategories };
     }
     if (user?.likedCategories?.length && !filters.category) {
-      // Light personalization: boost liked categories by filtering to them when no explicit filter is set.
       where.category = { in: user.likedCategories };
     }
   }
@@ -30,6 +59,7 @@ export async function getArticles(filters: ArticleFilters = {}, userId?: string)
     where,
     orderBy: { createdAt: "desc" },
     take: 100,
+    select: ARTICLE_SELECT,
   });
 }
 
@@ -44,6 +74,7 @@ export async function getInsightOfTheDay() {
   return prisma.article.findFirst({
     where: { duplicateOfId: null },
     orderBy: [{ finalScore: "desc" }, { createdAt: "desc" }],
+    select: ARTICLE_SELECT,
   });
 }
 
