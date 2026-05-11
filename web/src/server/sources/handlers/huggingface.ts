@@ -1,38 +1,52 @@
-import * as cheerio from "cheerio";
 import type { SourceConfig } from "@/server/sources/registry";
 import type { NormalizedItem } from "@/server/sources/normalized";
 
+interface HFModel {
+  id: string;
+  modelId?: string;
+  createdAt?: string;
+  lastModified?: string;
+  downloads?: number;
+  likes?: number;
+}
+
 export async function ingestHuggingFace(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  const resp = await fetch(source.url, {
-    headers: { "User-Agent": "SignalAI/1.0" },
+  const url = `https://huggingface.co/api/models?sort=trending&limit=${limit}&direction=-1`;
+  const resp = await fetch(url, {
+    headers: { "User-Agent": "SignalAI/1.0 (+https://signalai.app)" },
   });
-  if (!resp.ok) throw new Error(`Hugging Face fetch failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(`Hugging Face API fetch failed: ${resp.status}`);
 
-  const html = await resp.text();
-  const $ = cheerio.load(html);
+  let models: HFModel[];
+  try {
+    models = await resp.json();
+  } catch {
+    throw new Error("Hugging Face API returned non-JSON response");
+  }
 
-  const links = new Set<string>();
-  $("a[href]").each((_, el) => {
-    const href = $(el).attr("href");
-    if (!href) return;
-    // model pages look like /org/model-name — require at least one dash or letter combo
-    if (/^\/[A-Za-z0-9_.-]{2,}\/[A-Za-z0-9_.-]{2,}$/.test(href)) links.add(href);
-  });
-
-  return Array.from(links)
+  return models
+    .filter((model) => !!(model.id ?? model.modelId))
     .slice(0, limit)
-    .map((href) => {
-      const url = `https://huggingface.co${href}`;
-      const title = `Hugging Face model: ${href.slice(1)}`;
+    .map((model) => {
+      const modelId = (model.id ?? model.modelId)!;
+      const slashIdx = modelId.indexOf("/");
+      const [org, name] =
+        slashIdx >= 0
+          ? [modelId.slice(0, slashIdx), modelId.slice(slashIdx + 1)]
+          : ["huggingface", modelId];
+      const title = `${name} by ${org}`;
+      const modelUrl = `https://huggingface.co/${modelId}`;
       return {
         title,
-        content: title,
+        content: `Trending model on Hugging Face: ${modelId}. Downloads: ${model.downloads ?? 0}, Likes: ${model.likes ?? 0}.`,
         source: source.name,
         source_type: source.type,
         layer: source.layer,
-        url,
-        created_at: new Date(),
-        engagement: {},
+        url: modelUrl,
+        created_at: model.lastModified ? new Date(model.lastModified) : new Date(),
+        engagement: {
+          stars: model.likes,
+        },
       } satisfies NormalizedItem;
     });
 }
