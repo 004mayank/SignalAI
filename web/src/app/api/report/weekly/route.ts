@@ -37,29 +37,13 @@ export async function GET() {
 
     const prompt = `You are an AI trend analyst writing a weekly report for builders.\n\nTop trends:\n${trendBullets}\n\nKey insights:\n${insightBullets}\n\nReturn JSON: {"recommended_actions": ["..."]}. Each action should be specific and practical. 3-6 items.`;
 
-    const resp = await openai.responses.create({
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      input: [{ role: "user", content: prompt }],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "WeeklyReport",
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              recommended_actions: {
-                type: "array",
-                items: { type: "string" },
-              },
-            },
-            required: ["recommended_actions"],
-          },
-        },
-      },
+    const resp = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
     });
 
-    const json = JSON.parse(resp.output_text);
+    const json = JSON.parse(resp.choices[0]?.message?.content ?? "{}");
     recommendedActions = Array.isArray(json.recommended_actions)
       ? json.recommended_actions.map(String)
       : [];

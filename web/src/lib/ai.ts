@@ -50,53 +50,16 @@ export async function analyzeArticleWithLLM(params: {
   )}\n\nReturn JSON with keys: tldr, what_happened, why_it_matters, use_case, category, relevance_score, impact_level, actionable_takeaway, target_persona.`;
 
   // Use JSON mode to keep the output robust.
-  const resp = await openai.responses.create({
-    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-    input: [
+  const resp = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+    messages: [
       { role: "system", content: system },
       { role: "user", content: user },
     ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "SignalAIArticleAnalysis",
-        schema: {
-          type: "object",
-          additionalProperties: false,
-          properties: {
-            tldr: { type: "string" },
-            what_happened: { type: "string" },
-            why_it_matters: { type: "string" },
-            use_case: { type: "string" },
-            category: {
-              type: "string",
-              enum: ["Agents", "LLMs", "Infra", "UX", "Other"],
-            },
-            relevance_score: { type: "integer", minimum: 1, maximum: 5 },
-            impact_level: {
-              type: "string",
-              enum: ["High", "Medium", "Low"],
-            },
-            actionable_takeaway: { type: "string" },
-            target_persona: { type: "string", enum: ["Dev", "PM", "Founder"] },
-          },
-          required: [
-            "tldr",
-            "what_happened",
-            "why_it_matters",
-            "use_case",
-            "category",
-            "relevance_score",
-            "impact_level",
-            "actionable_takeaway",
-            "target_persona",
-          ],
-        },
-      },
-    },
+    response_format: { type: "json_object" },
   });
 
-  const text = resp.output_text;
+  const text = resp.choices[0]?.message?.content ?? "{}";
   const json = JSON.parse(text);
   return ArticleAIResultSchema.parse(json);
 }

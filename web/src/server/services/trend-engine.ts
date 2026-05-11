@@ -119,24 +119,13 @@ async function generateTrendMeta(clusterId: string): Promise<{ name: string; sum
 
   const prompt = `You are naming an AI ecosystem trend from a cluster of related updates.\n\nTitles:\n${titles}\n\nReturn JSON: {"name": "...", "summary": "..."}.\nRules: name <= 60 chars, summary <= 220 chars, no hype.`;
 
-  const resp = await openai.responses.create({
-    model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-    input: [{ role: "user", content: prompt }],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "TrendMeta",
-        schema: {
-          type: "object",
-          additionalProperties: false,
-          properties: { name: { type: "string" }, summary: { type: "string" } },
-          required: ["name", "summary"],
-        },
-      },
-    },
+  const resp = await openai.chat.completions.create({
+    model: process.env.OPENAI_MODEL ?? "gpt-4.1-mini",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
   });
 
-  const json = JSON.parse(resp.output_text);
+  const json = JSON.parse(resp.choices[0]?.message?.content ?? "{}");
   return {
     name: String(json.name).slice(0, 60),
     summary: String(json.summary).slice(0, 220),

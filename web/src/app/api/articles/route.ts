@@ -44,7 +44,14 @@ export async function GET(req: Request) {
   const minRelevance = parsed.min_relevance ? Number(parsed.min_relevance) : undefined;
   const limit = parsed.limit ? Math.min(100, Math.max(1, Number(parsed.limit))) : 50;
 
-  const where: Prisma.ArticleWhereInput = { duplicateOfId: null };
+  // Freemium gate: free tier sees articles older than 48 hours.
+  const tier = (req as Request & { headers: Headers }).headers.get("x-user-tier") ?? "free";
+  const freeGateCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+
+  const where: Prisma.ArticleWhereInput = {
+    duplicateOfId: null,
+    ...(tier === "free" ? { publishedAt: { lt: freeGateCutoff } } : {}),
+  };
   if (parsed.category) where.category = parsed.category;
   if (parsed.source_type) where.sourceType = parsed.source_type;
   if (parsed.layer) where.layer = parsed.layer;
@@ -54,6 +61,30 @@ export async function GET(req: Request) {
     where,
     orderBy: { createdAt: "desc" },
     take: limit,
+    select: {
+      id: true,
+      title: true,
+      summary: true,
+      whatHappened: true,
+      whyItMatters: true,
+      useCase: true,
+      actionableTakeaway: true,
+      impactLevel: true,
+      targetPersona: true,
+      category: true,
+      llmScore: true,
+      finalScore: true,
+      clusterId: true,
+      source: true,
+      sourceType: true,
+      layer: true,
+      engagementStars: true,
+      engagementUpvotes: true,
+      engagementComments: true,
+      url: true,
+      publishedAt: true,
+      createdAt: true,
+    },
   });
 
   return NextResponse.json({ articles, demo: false });

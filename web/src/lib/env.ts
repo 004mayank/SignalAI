@@ -4,6 +4,8 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().min(1).optional(),
+  BEEHIIV_API_KEY: z.string().min(1).optional(),
+  BEEHIIV_PUBLICATION_ID: z.string().min(1).optional(),
   // Comma-separated RSS feed URLs (optional). If omitted, the app can run with seed data.
   RSS_FEEDS: z.string().optional(),
 });
@@ -18,6 +20,8 @@ export function getEnv(): Env {
     DATABASE_URL: process.env.DATABASE_URL,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENAI_MODEL: process.env.OPENAI_MODEL,
+    BEEHIIV_API_KEY: process.env.BEEHIIV_API_KEY,
+    BEEHIIV_PUBLICATION_ID: process.env.BEEHIIV_PUBLICATION_ID,
     RSS_FEEDS: process.env.RSS_FEEDS,
   });
   return cached;

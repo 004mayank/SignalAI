@@ -1,19 +1,21 @@
 import type { SourceConfig } from "@/server/sources/registry";
 import type { NormalizedItem } from "@/server/sources/normalized";
 
-// Product Hunt AI topics via RSS feed (no auth required).
-export async function ingestProductHunt(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  const rssUrl = "https://www.producthunt.com/feed?category=artificial-intelligence";
-  const resp = await fetch(rssUrl, {
+// Twitter ingestion via Nitter RSS — no API key required at MVP.
+// Each source.url should be a Nitter RSS endpoint, e.g.:
+//   https://nitter.net/sama/rss
+//   https://nitter.net/search/rss?q=AI+LLM
+export async function ingestTwitter(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
+  const resp = await fetch(source.url, {
     headers: { "User-Agent": "SignalAI/1.0 (+https://signalai.app)" },
   });
-  if (!resp.ok) throw new Error(`Product Hunt RSS fetch failed: ${resp.status}`);
+  if (!resp.ok) throw new Error(`Twitter/Nitter fetch failed: ${resp.status}`);
 
   const xml = await resp.text();
   const items = parseRssItems(xml);
 
   return items.slice(0, limit).map((item) => ({
-    title: item.title,
+    title: item.title.slice(0, 280),
     content: item.description || item.title,
     source: source.name,
     source_type: source.type,

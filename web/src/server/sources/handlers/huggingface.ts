@@ -12,11 +12,11 @@ export async function ingestHuggingFace(source: SourceConfig, limit = 20): Promi
   const $ = cheerio.load(html);
 
   const links = new Set<string>();
-  $("a[href^='/' ]").each((_, el) => {
+  $("a[href]").each((_, el) => {
     const href = $(el).attr("href");
     if (!href) return;
-    // model pages look like /org/model
-    if (/^\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(href)) links.add(href);
+    // model pages look like /org/model-name — require at least one dash or letter combo
+    if (/^\/[A-Za-z0-9_.-]{2,}\/[A-Za-z0-9_.-]{2,}$/.test(href)) links.add(href);
   });
 
   return Array.from(links)

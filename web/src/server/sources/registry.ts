@@ -5,7 +5,8 @@ export type SourceType =
   | "huggingface"
   | "reddit"
   | "hn"
-  | "producthunt";
+  | "producthunt"
+  | "twitter";
 
 export type SourceLayer =
   | "research"
@@ -132,5 +133,67 @@ export const SOURCES: SourceConfig[] = [
     url: "https://www.notion.so/blog/rss.xml",
     weight: 4,
     layer: "distribution",
+  },
+
+  // Additional Labs
+  {
+    name: "Meta AI Blog",
+    type: "rss",
+    url: "https://ai.meta.com/blog/rss/",
+    weight: 5,
+    layer: "labs",
+  },
+  {
+    name: "Mistral Blog",
+    type: "rss",
+    url: "https://mistral.ai/news/rss/",
+    weight: 4,
+    layer: "labs",
+  },
+  {
+    name: "Cohere Blog",
+    type: "rss",
+    url: "https://cohere.com/blog/rss",
+    weight: 4,
+    layer: "labs",
+  },
+
+  // Additional Builder signals
+  {
+    name: "LangChain Blog",
+    type: "rss",
+    url: "https://blog.langchain.dev/rss/",
+    weight: 4,
+    layer: "builder",
+  },
+  {
+    name: "Weights & Biases",
+    type: "rss",
+    url: "https://wandb.ai/fully-connected/feed",
+    weight: 3,
+    layer: "builder",
+  },
+
+  // X / Twitter via Nitter RSS (key AI accounts)
+  {
+    name: "X: Sam Altman",
+    type: "twitter",
+    url: "https://nitter.net/sama/rss",
+    weight: 4,
+    layer: "community",
+  },
+  {
+    name: "X: Andrej Karpathy",
+    type: "twitter",
+    url: "https://nitter.net/karpathy/rss",
+    weight: 4,
+    layer: "community",
+  },
+  {
+    name: "X: Yann LeCun",
+    type: "twitter",
+    url: "https://nitter.net/ylecun/rss",
+    weight: 4,
+    layer: "community",
   },
 ];

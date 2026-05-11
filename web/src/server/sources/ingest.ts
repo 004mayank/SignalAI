@@ -7,6 +7,7 @@ import { ingestArxiv } from "@/server/sources/handlers/arxiv";
 import { ingestHN } from "@/server/sources/handlers/hn";
 import { ingestProductHunt } from "@/server/sources/handlers/producthunt";
 import { ingestHuggingFace } from "@/server/sources/handlers/huggingface";
+import { ingestTwitter } from "@/server/sources/handlers/twitter";
 
 export async function ingestSource(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
   switch (source.type) {
@@ -24,6 +25,8 @@ export async function ingestSource(source: SourceConfig, limit = 20): Promise<No
       return ingestProductHunt(source, limit);
     case "huggingface":
       return ingestHuggingFace(source, limit);
+    case "twitter":
+      return ingestTwitter(source, limit);
     default:
       return [];
   }
