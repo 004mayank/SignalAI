@@ -140,22 +140,22 @@ export default async function HomePage() {
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {liveSignals.map((a, i) => (
                 <Link key={a.id} href={`/article/${a.id}`}
-                  className={"group rounded-2xl border p-5 transition-all duration-200 hover:bg-white/[0.05] " +
+                  className={"group rounded-2xl border p-6 transition-all duration-200 hover:bg-white/[0.05] " +
                     (i === 0 ? "border-cyan-500/30 bg-cyan-500/5" : "border-white/8 bg-white/[0.025] hover:border-white/15")}>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">{a.source}</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{a.source}</span>
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold ${impactColor(a.impactLevel)}`}>{a.impactLevel}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${categoryColor(a.category)}`}>{a.category}</span>
+                      <span className={`text-xs font-bold ${impactColor(a.impactLevel)}`}>{a.impactLevel}</span>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${categoryColor(a.category)}`}>{a.category}</span>
                     </div>
                   </div>
-                  <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-white transition-colors group-hover:text-cyan-200">{a.title}</h3>
-                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-zinc-500">{a.summary}</p>
+                  <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-cyan-200">{a.title}</h3>
+                  <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-zinc-400">{a.summary}</p>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="text-[10px] text-zinc-600">
+                    <span className="text-xs text-zinc-600">
                       {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
                     </span>
-                    <span className="text-[11px] font-bold text-cyan-400 opacity-0 transition-opacity group-hover:opacity-100">Read briefing</span>
+                    <span className="text-xs font-bold text-cyan-400 opacity-0 transition-opacity group-hover:opacity-100">Read briefing →</span>
                   </div>
                 </Link>
               ))}
@@ -175,15 +175,21 @@ export default async function HomePage() {
           <p className="mt-3 text-center text-sm text-zinc-500">Research labs, open-source repos, community forums, and key voices across the AI ecosystem.</p>
         </div>
         <div className="space-y-3">
-          <div className="flex gap-4 animate-marquee whitespace-nowrap">
-            {SOURCES_MARQUEE.map((s, i) => (
-              <span key={i} className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 hover:border-cyan-500/30 hover:text-white transition-colors cursor-default">{s}</span>
-            ))}
+          {/* Row 1: right → left */}
+          <div className="overflow-hidden">
+            <div className="flex gap-4 whitespace-nowrap" style={{ animation: 'marquee 38s linear infinite' }}>
+              {SOURCES_MARQUEE.map((s, i) => (
+                <span key={i} className="inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 hover:border-cyan-500/30 hover:text-white transition-colors cursor-default">{s}</span>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-4 animate-marquee-reverse whitespace-nowrap">
-            {[...SOURCES_MARQUEE].reverse().map((s, i) => (
-              <span key={i} className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 hover:border-purple-500/30 hover:text-white transition-colors cursor-default">{s}</span>
-            ))}
+          {/* Row 2: left → right */}
+          <div className="overflow-hidden">
+            <div className="flex gap-4 whitespace-nowrap" style={{ animation: 'marquee 38s linear infinite reverse' }}>
+              {[...SOURCES_MARQUEE].reverse().map((s, i) => (
+                <span key={i} className="inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 hover:border-purple-500/30 hover:text-white transition-colors cursor-default">{s}</span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
