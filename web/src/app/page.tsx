@@ -45,10 +45,10 @@ export default async function HomePage() {
 
       {/* Sticky nav */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#07090d]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/">
-            <div className="text-base font-bold tracking-tight text-white">SignalAI</div>
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500">Electric Intelligence</div>
+        <div className="flex items-center justify-between px-8 py-4">
+          <Link href="/" className="flex items-center gap-1">
+            <span className="text-lg font-black tracking-tight text-white">SIGNAL</span>
+            <span className="text-lg font-black tracking-tight text-amber-400">AI</span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -66,9 +66,9 @@ export default async function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-6 pb-24 pt-20">
+      <section className="relative overflow-hidden pb-24 pt-20">
         <div className="absolute inset-0 [background:radial-gradient(900px_circle_at_20%_40%,rgba(34,211,238,0.08),transparent_55%),radial-gradient(700px_circle_at_80%_10%,rgba(168,85,247,0.08),transparent_50%)]" />
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div className="relative grid w-full items-center gap-12 px-8 lg:grid-cols-2 lg:px-16">
 
           {/* Text */}
           <div>
@@ -129,8 +129,8 @@ export default async function HomePage() {
       </section>
 
       {/* Live Signals */}
-      <section className="border-y border-white/5 bg-white/[0.01] px-6 py-20">
-        <div className="mx-auto max-w-7xl">
+      <section className="border-y border-white/5 bg-white/[0.01] py-20">
+        <div className="px-8 lg:px-16">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Live right now</p>
@@ -181,7 +181,7 @@ export default async function HomePage() {
 
       {/* Source Coverage */}
       <section className="overflow-hidden border-b border-white/5 bg-white/[0.01] py-16">
-        <div className="mx-auto mb-10 max-w-7xl px-6">
+        <div className="mb-10 px-8 lg:px-16">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-zinc-500">Sources</p>
           <h2 className="mt-3 text-center text-2xl font-bold text-white md:text-3xl">22 sources. One feed.</h2>
           <p className="mt-3 text-center text-sm text-zinc-500">Research labs, open-source repos, community forums, and key voices across the AI ecosystem.</p>
@@ -204,63 +204,61 @@ export default async function HomePage() {
       <WhoIsItFor />
 
       {/* Newsletter CTA */}
-      <section className="px-6 py-24">
-        <div className="mx-auto max-w-3xl">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-950/40 via-[#07090d] to-purple-950/30 p-10 text-center md:p-16">
-            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/5 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/5 blur-3xl" />
-            <div className="relative">
-              <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 ring-1 ring-cyan-500/20 text-cyan-400">
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 6l9 6 9-6M2 6a2 2 0 012-2h14a2 2 0 012 2M2 6v10a2 2 0 002 2h14a2 2 0 002-2V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </div>
-              <h2 className="text-3xl font-bold text-white md:text-4xl">AI intelligence in your inbox, every week.</h2>
-              <p className="mt-4 text-lg text-zinc-400">The five signals that mattered most this week, curated and structured. No filler.</p>
-              <div className="mt-8">
-                <Link href="/newsletter" className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-8 py-4 text-sm font-bold text-black hover:opacity-90 transition-opacity">
-                  Subscribe on Beehiiv
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                </Link>
-              </div>
-              <p className="mt-4 text-xs text-zinc-600">No spam. Unsubscribe any time.</p>
+      <section className="py-24 px-8 lg:px-16">
+        <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-950/40 via-[#07090d] to-purple-950/30 p-10 text-center md:p-16">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-500/5 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/5 blur-3xl" />
+          <div className="relative">
+            <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 ring-1 ring-cyan-500/20 text-cyan-400">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M2 6l9 6 9-6M2 6a2 2 0 012-2h14a2 2 0 012 2M2 6v10a2 2 0 002 2h14a2 2 0 002-2V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
+            <h2 className="text-3xl font-bold text-white md:text-4xl">AI intelligence in your inbox, every week.</h2>
+            <p className="mt-4 text-lg text-zinc-400">The five signals that mattered most this week, curated and structured. No filler.</p>
+            <div className="mt-8">
+              <Link href="/newsletter" className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-8 py-4 text-sm font-bold text-black hover:opacity-90 transition-opacity">
+                Subscribe on Beehiiv
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </Link>
+            </div>
+            <p className="mt-4 text-xs text-zinc-600">No spam. Unsubscribe any time.</p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 px-6 py-12">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            <div className="col-span-2 md:col-span-1">
-              <div className="text-base font-bold text-white">SignalAI</div>
-              <div className="text-[11px] uppercase tracking-widest text-zinc-600">Electric Intelligence</div>
-              <p className="mt-3 text-xs leading-relaxed text-zinc-600">Signal for the AI era. Built for developers, PMs, and founders who need to stay ahead.</p>
+      <footer className="border-t border-white/5 px-8 py-12 lg:px-16">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-1">
+              <span className="text-base font-black tracking-tight text-white">SIGNAL</span>
+              <span className="text-base font-black tracking-tight text-amber-400">AI</span>
             </div>
-            <div>
-              <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Product</div>
-              <div className="space-y-2">
-                {[["Feed", "/feed"], ["Trends", "/trends"], ["Newsletter", "/newsletter"]].map(([label, href]) => (
-                  <Link key={href} href={href} className="block text-sm text-zinc-500 hover:text-white transition-colors">{label}</Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Sources</div>
-              <div className="space-y-2 text-sm text-zinc-600">
-                <div>22 live sources</div><div>6 source layers</div><div>Updated every 6 hours</div>
-              </div>
-            </div>
-            <div>
-              <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Coverage</div>
-              <div className="space-y-2 text-sm text-zinc-600">
-                <div>Research</div><div>Open Source</div><div>Community</div><div>Company Blogs</div>
-              </div>
+            <p className="mt-3 text-xs leading-relaxed text-zinc-600">Signal for the AI era. Built for developers, PMs, and founders who need to stay ahead.</p>
+          </div>
+          <div>
+            <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Product</div>
+            <div className="space-y-2">
+              {[["Feed", "/feed"], ["Trends", "/trends"], ["Newsletter", "/newsletter"]].map(([label, href]) => (
+                <Link key={href} href={href} className="block text-sm text-zinc-500 hover:text-white transition-colors">{label}</Link>
+              ))}
             </div>
           </div>
-          <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 sm:flex-row">
-            <div className="text-xs text-zinc-700">2026 SignalAI. All rights reserved.</div>
-            <Link href="/feed" className="text-xs text-cyan-600 hover:text-cyan-400 transition-colors">Explore the Feed</Link>
+          <div>
+            <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Sources</div>
+            <div className="space-y-2 text-sm text-zinc-600">
+              <div>22 live sources</div><div>6 source layers</div><div>Updated every 6 hours</div>
+            </div>
           </div>
+          <div>
+            <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Coverage</div>
+            <div className="space-y-2 text-sm text-zinc-600">
+              <div>Research</div><div>Open Source</div><div>Community</div><div>Company Blogs</div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 sm:flex-row">
+          <div className="text-xs text-zinc-700">2026 SignalAI. All rights reserved.</div>
+          <Link href="/feed" className="text-xs text-cyan-600 hover:text-cyan-400 transition-colors">Explore the Feed</Link>
         </div>
       </footer>
     </div>

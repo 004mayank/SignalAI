@@ -71,8 +71,8 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section className="py-24 px-6 border-y border-white/5 bg-white/[0.01]">
-      <div className="mx-auto max-w-6xl">
+    <section className="py-24 px-8 border-y border-white/5 bg-white/[0.01] lg:px-16">
+      <div className="w-full">
         <p className="text-center text-xs font-bold uppercase tracking-widest text-zinc-500">How it works</p>
         <h2 className="mt-3 text-center text-3xl font-bold text-white md:text-4xl">
           From raw noise to actionable signal.

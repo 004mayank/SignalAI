@@ -46,11 +46,9 @@ export function AppSidebar({ showFilters = true }: Props) {
   return (
     <aside className="hidden w-[280px] shrink-0 border-r border-white/5 bg-black/40 px-4 py-5 md:block">
       <div className="flex items-center justify-between">
-        <div>
-          <div className="text-lg font-semibold tracking-tight text-white">SignalAI</div>
-          <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">
-            Electric intelligence
-          </div>
+        <div className="flex items-center gap-1">
+          <span className="text-lg font-black tracking-tight text-white">SIGNAL</span>
+          <span className="text-lg font-black tracking-tight text-amber-400">AI</span>
         </div>
       </div>
 

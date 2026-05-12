@@ -87,8 +87,8 @@ export function WhoIsItFor() {
   const colors = accentClasses[p.accent];
 
   return (
-    <section className="py-24 px-6">
-      <div className="mx-auto max-w-4xl">
+    <section className="py-24 px-8 lg:px-16">
+      <div className="w-full">
         <p className="text-center text-xs font-bold uppercase tracking-widest text-zinc-500">Who is it for</p>
         <h2 className="mt-3 text-center text-3xl font-bold text-white md:text-4xl">
           Built for the people building AI products.
