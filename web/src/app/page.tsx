@@ -67,9 +67,9 @@ export default async function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden pb-24 pt-20">
+      <section className="relative overflow-hidden pb-10 pt-16">
         <div className="absolute inset-0 [background:radial-gradient(900px_circle_at_20%_40%,rgba(34,211,238,0.08),transparent_55%),radial-gradient(700px_circle_at_80%_10%,rgba(168,85,247,0.08),transparent_50%)]" />
-        <div className="relative grid w-full items-center gap-12 px-8 lg:grid-cols-2 lg:px-16">
+        <div className="relative grid w-full items-center gap-8 px-8 lg:grid-cols-2 lg:px-16">
 
           {/* Text */}
           <div>
@@ -109,8 +109,7 @@ export default async function HomePage() {
 
           {/* 3D Node Mesh */}
           <div className="flex items-center justify-center">
-            <div className="relative h-[560px] w-full">
-              <div className="absolute inset-0 rounded-full bg-cyan-500/5 blur-3xl" />
+            <div className="relative h-[640px] w-full lg:h-[700px]">
               <NodeMesh />
             </div>
           </div>
@@ -118,7 +117,7 @@ export default async function HomePage() {
       </section>
 
       {/* Live Signals */}
-      <section className="border-y border-white/5 bg-white/[0.01] py-20">
+      <section className="border-y border-white/5 bg-white/[0.01] pb-16 pt-10">
         <div className="px-8 lg:px-16">
           <div className="flex items-center justify-between">
             <div>
