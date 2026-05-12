@@ -12,7 +12,7 @@ const COLORS = [
   "#34d399", // emerald
 ];
 
-const NODE_COUNT = 120;
+const NODE_COUNT = 180;
 const ROT_SPEED = 0.0012;
 // Cursor proximity boost radius in screen px
 const CURSOR_RADIUS = 110;
@@ -59,7 +59,7 @@ export function NodeMesh() {
     const CX = W / 2;
     const CY = H / 2;
     const SPHERE_R = Math.min(W, H) * 0.52;
-    const CONNECT_DIST_SQ = (SPHERE_R * 0.62) ** 2;
+    const CONNECT_DIST_SQ = (SPHERE_R * 0.68) ** 2;
     const FOV = Math.min(W, H) * 2.4;
 
     const nodes: Node[] = Array.from({ length: NODE_COUNT }, () => {
@@ -172,15 +172,15 @@ export function NodeMesh() {
             (pb.sx - mouseX) ** 2 + (pb.sy - mouseY) ** 2 < CURSOR_RADIUS_SQ;
 
           const baseAlpha = (0.12 + 0.22 * distFactor) * (0.35 + 0.65 * depthFactor);
-          const alpha = nearCursor ? Math.min(baseAlpha * 3.5, 0.75) : baseAlpha;
+          const alpha = nearCursor ? Math.min(baseAlpha * 2.0, 0.45) : baseAlpha;
 
           ctx.beginPath();
           ctx.moveTo(pa.sx, pa.sy);
           ctx.lineTo(pb.sx, pb.sy);
           ctx.strokeStyle = nearCursor
-            ? `rgba(180,220,255,${alpha.toFixed(3)})`
+            ? `rgba(160,210,255,${alpha.toFixed(3)})`
             : `rgba(140,200,240,${alpha.toFixed(3)})`;
-          ctx.lineWidth = nearCursor ? 1.1 * ((pa.s + pb.s) / 2) : 0.7 * ((pa.s + pb.s) / 2);
+          ctx.lineWidth = nearCursor ? 0.9 * ((pa.s + pb.s) / 2) : 0.7 * ((pa.s + pb.s) / 2);
           ctx.stroke();
         }
       }
@@ -198,9 +198,9 @@ export function NodeMesh() {
 
         const glow = 0.5 + 0.5 * Math.sin(n.phase);
         const depth = (n.z / SPHERE_R + 1) / 2;
-        const brightness = (0.55 + 0.45 * depth) + cursorBoost * 0.6;
+        const brightness = (0.55 + 0.45 * depth) + cursorBoost * 0.25;
 
-        const sizeBoost = 1 + cursorBoost * 1.4;
+        const sizeBoost = 1 + cursorBoost * 0.55;
         const r = n.size * s * (1.0 + 0.4 * glow) * sizeBoost;
 
         // Inner glow
@@ -217,8 +217,8 @@ export function NodeMesh() {
 
         // Wide bloom
         if (glow > 0.4 || cursorBoost > 0.1) {
-          const bloomR = r * (6 + cursorBoost * 4);
-          const bloomA = ((glow - 0.4) * 0.4 + cursorBoost * 0.55) * Math.min(brightness, 1);
+          const bloomR = r * (6 + cursorBoost * 2);
+          const bloomA = ((glow - 0.4) * 0.4 + cursorBoost * 0.2) * Math.min(brightness, 1);
           if (bloomA > 0) {
             const bloom = ctx.createRadialGradient(sx, sy, 0, sx, sy, bloomR);
             bloom.addColorStop(0, n.color + hexAlpha(Math.min(bloomA, 1)));
@@ -241,7 +241,7 @@ export function NodeMesh() {
         ctx.beginPath();
         ctx.arc(sx - r * 0.28, sy - r * 0.28, r * 0.38, 0, Math.PI * 2);
         ctx.fillStyle = "#ffffff";
-        ctx.globalAlpha = Math.min(0.35 * glow * brightness + cursorBoost * 0.3, 0.85);
+        ctx.globalAlpha = Math.min(0.35 * glow * brightness + cursorBoost * 0.12, 0.7);
         ctx.fill();
 
         ctx.globalAlpha = 1;
