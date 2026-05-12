@@ -1,6 +1,6 @@
 # SignalAI
 
-AI trend intelligence platform that ingests content from 13 sources across the AI ecosystem, extracts structured insights via LLM, clusters articles by semantic similarity, and surfaces trending topics with velocity metrics.
+AI trend intelligence platform that ingests content from 22 sources across the AI ecosystem, extracts structured insights via LLM, clusters articles by semantic similarity, surfaces trending topics with velocity metrics, and generates deep-dive signal briefs for every article.
 
 ---
 
@@ -8,7 +8,7 @@ AI trend intelligence platform that ingests content from 13 sources across the A
 
 - **Next.js 16 (App Router)** + React 19 + Tailwind 4
 - **PostgreSQL + Prisma 6** — articles, clusters, trends, time-series stats
-- **OpenAI** — structured article analysis (`gpt-4.1-mini`) + embeddings (`text-embedding-3-small`)
+- **OpenAI** — structured article analysis (`gpt-4.1-mini`) + embeddings (`text-embedding-3-small`) + deep-dive article generation
 - **node-cron + tsx** — scheduled ingestion worker
 
 ---
@@ -24,6 +24,8 @@ web/
     ├── app/
     │   ├── page.tsx              # Feed (/)
     │   ├── trends/page.tsx       # Trends (/trends)
+    │   ├── newsletter/page.tsx   # Newsletter (/newsletter)
+    │   ├── article/[id]/page.tsx # Deep-dive article page (/article/[id])
     │   └── api/
     │       ├── ingest/           # POST /api/ingest
     │       ├── articles/         # GET  /api/articles
@@ -40,7 +42,7 @@ web/
         │   ├── trend-engine.ts   # Cluster assignment + trend upsert + LLM naming
         │   └── trend-stats.ts    # Velocity: last 7d vs previous 7d
         └── sources/
-            ├── registry.ts       # 13 configured sources
+            ├── registry.ts       # 22 configured sources
             ├── ingest.ts         # Source dispatcher
             ├── normalized.ts     # NormalizedItem shape
             └── handlers/
@@ -59,13 +61,13 @@ web/
 
 For each article:
 
-1. **Fetch + normalize** from source handler → `NormalizedItem`
+1. **Fetch + normalize** from source handler to `NormalizedItem`
 2. **Dedup by URL** — skip if already in DB
-3. **LLM analysis** — extract: `tldr`, `what_happened`, `why_it_matters`, `use_case`, `category`, `relevance_score` (1–5), `impact_level`, `target_persona`, `actionable_takeaway`
+3. **LLM analysis** — extract: `tldr`, `what_happened`, `why_it_matters`, `use_case`, `category`, `relevance_score` (1-5), `impact_level`, `target_persona`, `actionable_takeaway`
 4. **Embed** — `text-embedding-3-small` (or deterministic pseudo-embedding if no API key)
-5. **Semantic dedup** — cosine similarity ≥ 0.9 against last 300 articles → mark `duplicateOfId`, skip clustering
-6. **Cluster** — cosine similarity ≥ 0.8 against existing cluster centroids in same category → assign or create cluster
-7. **Score** — `0.5 × llm_score + 0.3 × source_weight + 0.2 × engagement_score`
+5. **Semantic dedup** — cosine similarity >= 0.9 against last 300 articles, mark `duplicateOfId`, skip clustering
+6. **Cluster** — cosine similarity >= 0.8 against existing cluster centroids in same category, assign or create cluster
+7. **Score** — `0.5 x llm_score + 0.3 x source_weight + 0.2 x engagement_score`
 8. **Trend upsert** — create/update `Trend` for cluster; regenerate LLM name + summary every 5 new articles
 9. **Velocity** — upsert daily `TrendStat`; compute last 7d vs previous 7d growth
 
@@ -73,16 +75,36 @@ For each article:
 
 ## Source registry
 
-13 sources across 6 layers with configurable weights (1–5):
+22 sources across 6 layers with configurable weights (1-5):
 
-| Layer        | Sources                                                      |
-|--------------|--------------------------------------------------------------|
-| Research     | arXiv AI                                                     |
-| Labs         | OpenAI Blog, DeepMind Blog, Anthropic Blog                   |
-| Builder      | GitHub AI Trending, Hugging Face Models                      |
-| Community    | r/MachineLearning, r/LocalLLaMA, r/artificial, Hacker News   |
-| Startup      | Product Hunt                                                 |
-| Distribution | Microsoft AI Blog, Google AI Blog, Notion Blog               |
+| Layer        | Sources                                                                          |
+|--------------|----------------------------------------------------------------------------------|
+| Research     | arXiv AI                                                                         |
+| Labs         | OpenAI Blog, DeepMind Blog, Meta AI Blog, Mistral Blog                           |
+| Builder      | GitHub AI Trending, Hugging Face Models, LangChain Blog, Weights and Biases      |
+| Community    | r/MachineLearning, r/LocalLLaMA, r/artificial, Hacker News, X (Sam Altman, Andrej Karpathy, Yann LeCun) |
+| Startup      | Product Hunt AI                                                                  |
+| Distribution | Microsoft AI Blog, Google AI Blog                                                |
+
+---
+
+## Article deep-dive page
+
+Every article card links to `/article/[id]` instead of the external source directly. The page generates a full blog-style signal brief on first load using the LLM, cached per article for 24 hours.
+
+Generated sections:
+
+| Section | Description |
+|---|---|
+| Introduction | 3-4 sentence compelling opening that frames why this moment matters |
+| What Happened | Detailed factual explanation with specifics (numbers, names, timelines) |
+| The Bigger Picture | Strategic and industry-level implications |
+| Technical Deep Dive | Persona-appropriate technical depth (5-8 sentences) |
+| Real-World Applications | 4 concrete, specific application scenarios |
+| What to Do Now | 4 specific, actionable next steps |
+| Key Quote | One punchy insight that captures the essence |
+
+The original source URL is always available via a prominent link in the header, sidebar, and footer.
 
 ---
 
@@ -95,6 +117,7 @@ For each article:
 | `Trend`        | LLM-named trend derived from a cluster                         |
 | `TrendStat`    | Daily article count per trend (powers velocity)                |
 | `User`         | Liked/ignored categories for light personalization             |
+| `SourceHealth` | Last run timestamp, success/error count per source             |
 
 Enums: `ArticleCategory` (Agents/LLMs/Infra/UX/Other), `ImpactLevel`, `TargetPersona`, `SourceType`, `SourceLayer`
 
@@ -105,7 +128,7 @@ Enums: `ArticleCategory` (Agents/LLMs/Infra/UX/Other), `ImpactLevel`, `TargetPer
 ### `POST /api/ingest`
 
 ```jsonc
-// RSS mode (backward compat — also works via RSS_FEEDS env var)
+// RSS mode (backward compat, also works via RSS_FEEDS env var)
 { "feeds": ["https://..."], "limit": 15 }
 
 // Registry mode
@@ -137,7 +160,7 @@ Top 50 trends ordered by velocity + article count.
 
 Top 5 trends + key insights + LLM-generated recommended actions.
 
-### `GET /PUT /api/user/preferences`
+### `GET/PUT /api/user/preferences`
 
 ```json
 { "liked_categories": ["Agents"], "ignored_categories": ["UX"] }
@@ -147,7 +170,7 @@ Header: `x-user-id` (defaults to `"demo"`)
 
 ### `POST /api/seed`
 
-Loads 3 sample articles (OpenAI, OSS agents, GPU infra) with embeddings and scores — useful for local dev without running a full ingest.
+Loads 3 sample articles with embeddings and scores — useful for local dev without running a full ingest.
 
 ---
 
@@ -160,20 +183,20 @@ cd web
 cp .env.example .env
 ```
 
-| Variable                 | Required | Default                  | Notes                            |
-|--------------------------|----------|--------------------------|----------------------------------|
-| `DATABASE_URL`           | Yes      | —                        | PostgreSQL connection string      |
-| `OPENAI_API_KEY`         | No       | —                        | Enables real LLM + embeddings    |
-| `OPENAI_MODEL`           | No       | `gpt-4.1-mini`           | Used for analysis + trend naming |
-| `OPENAI_EMBEDDING_MODEL` | No       | `text-embedding-3-small` |                                  |
-| `RSS_FEEDS`              | No       | —                        | Comma-separated RSS URLs         |
-| `GITHUB_TOKEN`           | No       | —                        | Avoids GitHub rate limits        |
-| `INGEST_CRON`            | No       | `0 */6 * * *`            | Cron schedule for worker         |
-| `LOG_LEVEL`              | No       | `info`                   | Pino log level                   |
+| Variable                 | Required | Default                  | Notes                                          |
+|--------------------------|----------|--------------------------|------------------------------------------------|
+| `DATABASE_URL`           | Yes      |                          | PostgreSQL connection string                   |
+| `OPENAI_API_KEY`         | No       |                          | Enables real LLM, embeddings, deep-dive briefs |
+| `OPENAI_MODEL`           | No       | `gpt-4.1-mini`           | Used for analysis, trend naming, deep briefs   |
+| `OPENAI_EMBEDDING_MODEL` | No       | `text-embedding-3-small` |                                                |
+| `RSS_FEEDS`              | No       |                          | Comma-separated RSS URLs                       |
+| `GITHUB_TOKEN`           | No       |                          | Avoids GitHub rate limits                      |
+| `INGEST_CRON`            | No       | `0 */6 * * *`            | Cron schedule for worker                       |
+| `LOG_LEVEL`              | No       | `info`                   | Pino log level                                 |
 
 Without `OPENAI_API_KEY`, the app falls back to deterministic pseudo-embeddings and mocked LLM responses — all features work locally without any API keys.
 
-### 2. Install & migrate
+### 2. Install and migrate
 
 ```bash
 cd web
@@ -211,13 +234,25 @@ curl -X POST http://localhost:3000/api/ingest \
 
 ### Feed (`/`)
 
-- **Trending grid** — top 5 articles by final score
-- **Article cards** — TL;DR, why it matters, use case, impact level, target persona, actionable takeaway, score
+- **Trending grid** — top 5 articles by final score, click to open deep-dive brief
+- **Article cards** — TL;DR, why it matters, use case, impact level, target persona, score
 - **Sidebar filters** — category, layer, source type, min relevance slider
+- **Newsletter signup** — Beehiiv integration
+
+### Article (`/article/[id]`)
+
+- Full-width two-column layout: article body + sticky metadata sidebar
+- LLM-generated deep-dive brief with introduction, analysis, applications, and action steps
+- Prominent link to original source in header, sidebar, and footer CTA
+- Content cached per article for 24 hours
 
 ### Trends (`/trends`)
 
 - Grid of trend cards: name, summary, article count, velocity badge (+/-%)
+
+### Newsletter (`/newsletter`)
+
+- Beehiiv-powered subscription page
 
 ---
 
@@ -243,3 +278,4 @@ npm run db:generate    # Regenerate Prisma client
 - **Settings button** is non-functional.
 - **User preference controls** — API exists, no frontend UI yet.
 - **Vector storage** uses `Float[]` arrays. For production scale, migrate to native pgvector with an index.
+- **Deep-dive generation** adds 3-5 seconds to first article page load. Consider pre-generating on ingest for production.
