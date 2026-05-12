@@ -36,7 +36,7 @@ export function ArticleCard(props: {
       {/* Media / score panel (we don't have images yet; keep it as an intentional visual block) */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/5 via-cyan-500/10 to-purple-500/10 ring-1 ring-white/10">
         <div className="absolute inset-0 opacity-40 [background:radial-gradient(400px_circle_at_20%_20%,rgba(34,211,238,0.25),transparent_45%),radial-gradient(500px_circle_at_80%_70%,rgba(168,85,247,0.18),transparent_40%)]" />
-        <div className="relative flex h-full min-h-[140px] flex-col justify-between p-4">
+        <div className="relative flex h-full min-h-[160px] flex-col justify-between p-4">
           <div className="flex items-center justify-between">
             <span className="rounded-full bg-black/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-200 ring-1 ring-white/10">
               {a.category}
@@ -46,6 +46,11 @@ export function ArticleCard(props: {
               <div className="text-sm font-semibold text-cyan-200">{scoreLabel(a.finalScore)}</div>
             </span>
           </div>
+
+          {/* Title preview in the panel */}
+          <p className="my-3 line-clamp-3 text-sm font-semibold leading-snug text-white/80">
+            {a.title || "Untitled signal"}
+          </p>
 
           <div className="flex flex-wrap gap-2 text-[11px] text-zinc-300">
             <span className="rounded-full bg-white/5 px-2 py-1 ring-1 ring-white/10">
