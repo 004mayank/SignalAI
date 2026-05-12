@@ -109,7 +109,7 @@ export default async function HomePage() {
 
           {/* 3D Node Mesh */}
           <div className="flex items-center justify-center">
-            <div className="relative h-[640px] w-full lg:h-[700px]">
+            <div className="relative h-[460px] w-full lg:h-[500px]">
               <NodeMesh />
             </div>
           </div>
