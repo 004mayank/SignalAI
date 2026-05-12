@@ -12,6 +12,57 @@ async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// ─── Pre-filter ────────────────────────────────────────────────────────────
+// Cheap title-level gate that runs BEFORE any LLM or embedding call.
+// Returns true when the item is obvious noise and should be dropped immediately.
+
+// Patterns that disqualify any item regardless of source
+const UNIVERSAL_NOISE: RegExp[] = [
+  /visa (issue|problem|challenge|application)/i,
+  /who('s| is) hiring|want(s| to) be hired|job (post|board)|hiring.*internship/i,
+  /supply.chain (compromise|attack|hack)/i,
+  /npm (supply|package|registry)/i,
+  /soldering|gardening|stamp collecting/i,
+  /book club|reading group/i,
+  /screenshots? of old (desktop|ui|os)/i,
+  /remembering .*(before github|before the internet)/i,
+  /[\u4e00-\u9fff]{4,}/,            // blocks of Chinese text (Java guide etc.)
+];
+
+// Extra patterns applied only to noisy community sources (HN, Reddit)
+const COMMUNITY_NOISE: RegExp[] = [
+  /^\[D\]\s*(monthly|weekly|self-promotion|who's hiring|reading group|ama\b)/i,
+  /\[D\]\s*(monthly who's|self-promotion thread|ama announcement)/i,
+  /\[virtual\].*?(course|workshop|meetup|webinar|saturdays)/i,
+  /ama (announcement|session|thread)/i,
+  /phd students.*how many hours|how many hours.*work/i,
+  /how can i check.*formatting|arr formatting/i,
+  /are we finally getting to the point/i,   // vague opinion thread
+  /^a hn post with/i,
+  /what model (for|should|do) (coding|i use)/i,
+  /^screenshots? of/i,
+];
+
+function isObviousNoise(title: string, sourceType: string): boolean {
+  if (UNIVERSAL_NOISE.some((p) => p.test(title))) return true;
+  if (
+    (sourceType === "hn" || sourceType === "reddit") &&
+    COMMUNITY_NOISE.some((p) => p.test(title))
+  )
+    return true;
+  return false;
+}
+
+// Minimum LLM relevance score per source tier.
+// Community sources are noisier so we hold them to a higher bar.
+function minLlmScore(sourceType: string): number {
+  if (sourceType === "hn" || sourceType === "reddit") return 3;
+  return 2;
+}
+
+// Minimum final score (post-engagement weighting) before we persist anything.
+const MIN_FINAL_SCORE = 2.5;
+
 async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -68,6 +119,12 @@ export async function runIngestion(params?: {
           continue;
         }
 
+        // Gate 1 — cheap title pre-filter (no API call needed)
+        if (isObviousNoise(title, source.type)) {
+          skipped++;
+          continue;
+        }
+
         const exists = await prisma.article.findUnique({ where: { url } });
         if (exists) {
           skipped++;
@@ -81,8 +138,8 @@ export async function runIngestion(params?: {
           content,
         });
 
-        // Drop non-AI content immediately — no embedding, no DB write.
-        if (!ai.is_ai_relevant || ai.relevance_score < 2) {
+        // Gate 2 — LLM relevance flag + per-source score floor
+        if (!ai.is_ai_relevant || ai.relevance_score < minLlmScore(source.type)) {
           skipped++;
           continue;
         }
@@ -111,8 +168,8 @@ export async function runIngestion(params?: {
           engagementScore: engScore,
         });
 
-        // Drop low-signal articles before any DB writes.
-        if (finalScore < 2) {
+        // Gate 3 — final score floor (post-engagement weighting)
+        if (finalScore < MIN_FINAL_SCORE) {
           skipped++;
           continue;
         }

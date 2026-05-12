@@ -25,12 +25,20 @@ export type SourceConfig = {
 };
 
 export const SOURCES: SourceConfig[] = [
-  // Research
+  // Research — focused on LLMs, agents, and practical ML (cs.AI + cs.LG + cs.CL)
+  // with keyword filter to avoid niche fringe papers
   {
-    name: "arXiv AI",
+    name: "arXiv LLMs",
     type: "arxiv",
-    url: "http://export.arxiv.org/api/query?search_query=cat:cs.AI",
-    weight: 3,
+    url: "http://export.arxiv.org/api/query?search_query=cat:cs.CL+AND+(ti:LLM+OR+ti:language+model+OR+ti:agent+OR+ti:reasoning+OR+ti:instruction+OR+ti:RLHF+OR+ti:alignment)&sortBy=submittedDate&sortOrder=descending",
+    weight: 4,
+    layer: "research",
+  },
+  {
+    name: "arXiv Agents",
+    type: "arxiv",
+    url: "http://export.arxiv.org/api/query?search_query=cat:cs.AI+AND+(ti:agent+OR+ti:agentic+OR+ti:autonomous+OR+ti:multi-agent+OR+ti:tool+use)&sortBy=submittedDate&sortOrder=descending",
+    weight: 4,
     layer: "research",
   },
 
