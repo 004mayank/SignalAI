@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "About | SignalAI",
@@ -214,31 +215,61 @@ export default function AboutPage() {
 
       {/* Story */}
       <section className="border-y border-white/5 bg-white/[0.01] px-8 py-24 lg:px-16">
-        <div className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-4xl">
           <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">The Story</p>
           <h2 className="mt-3 text-3xl font-bold text-white md:text-4xl">Built by someone who needed it.</h2>
-          <div className="mt-6 space-y-5 text-[15px] leading-relaxed text-zinc-400">
-            <p>SignalAI started as a personal tool. The problem was simple: keeping up with AI research, open-source releases, and company announcements was consuming two to three hours every morning, and most of what surfaced was noise anyway. The signal-to-noise ratio was broken.</p>
-            <p>The first version was a scraper and a spreadsheet. The second added an LLM extraction step. The third added embeddings and clustering. At some point it became a product worth sharing.</p>
-            <p>This is still a small team -- currently one person building in public, shipping fast, and using the product every day. That means decisions get made based on what actually works, not roadmap politics. It also means your feedback goes directly to the person writing the code.</p>
-          </div>
-          <div className="mt-8 flex flex-wrap gap-6 border-t border-white/5 pt-8 text-sm text-zinc-400">
-            <span>Solo-founded</span>
-            <span className="text-zinc-700">|</span>
-            <span>Shipping since 2025</span>
-            <span className="text-zinc-700">|</span>
-            <span>Used daily by the builder</span>
-          </div>
-          <div className="mt-6 flex items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.02] p-5">
-            <div className="flex shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 p-2.5 ring-1 ring-cyan-500/20 text-cyan-400">
-              <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><path d="M2 6l9 6 9-6M2 6a2 2 0 012-2h14a2 2 0 012 2M2 6v10a2 2 0 002 2h14a2 2 0 002-2V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+
+          <div className="mt-10 grid gap-12 lg:grid-cols-[280px_1fr] items-start">
+            {/* Photo + name card */}
+            <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.02] p-6 text-center">
+              <div className="relative h-36 w-36 overflow-hidden rounded-full ring-2 ring-cyan-500/30">
+                <Image
+                  src="/mayank.jpeg"
+                  alt="Mayank Malviya"
+                  fill
+                  className="object-cover"
+                  sizes="144px"
+                />
+              </div>
+              <div>
+                <p className="text-base font-bold text-white">Mayank Malviya</p>
+                <p className="mt-0.5 text-xs text-zinc-500 uppercase tracking-widest">Founder</p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 text-xs text-zinc-500">
+                <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1">Product</span>
+                <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1">Engineering</span>
+                <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1">AI</span>
+              </div>
             </div>
+
+            {/* Story text */}
             <div>
-              <p className="text-sm font-semibold text-white">Have feedback or a feature request?</p>
-              <p className="mt-0.5 text-xs text-zinc-400">Reach out directly. Every message gets read.</p>
-              <Link href="/newsletter" className="mt-1 inline-block text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
-                Subscribe to stay in the loop
-              </Link>
+              <div className="space-y-5 text-[15px] leading-relaxed text-zinc-400">
+                <p>Hi, I am Mayank. SignalAI started as a personal tool because I was spending two to three hours every morning trying to keep up with AI research, open-source releases, and company announcements -- and most of what surfaced was noise anyway. The signal-to-noise ratio was broken.</p>
+                <p>The first version was a scraper and a spreadsheet. The second added an LLM extraction step. The third added embeddings and clustering. At some point it became a product worth sharing, so I shipped it.</p>
+                <p>This is still a one-person operation. I build it, use it daily, and iterate based on what actually works. That means your feedback goes directly to the person writing the code.</p>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-6 border-t border-white/5 pt-6 text-sm text-zinc-400">
+                <span>Solo-founded</span>
+                <span className="text-zinc-700">|</span>
+                <span>Shipping since 2025</span>
+                <span className="text-zinc-700">|</span>
+                <span>Used daily by Mayank</span>
+              </div>
+
+              <div className="mt-6 flex items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.02] p-5">
+                <div className="flex shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 p-2.5 ring-1 ring-cyan-500/20 text-cyan-400">
+                  <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><path d="M2 6l9 6 9-6M2 6a2 2 0 012-2h14a2 2 0 012 2M2 6v10a2 2 0 002 2h14a2 2 0 002-2V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Have feedback or a feature request?</p>
+                  <p className="mt-0.5 text-xs text-zinc-400">Reach out directly. Every message gets read by Mayank.</p>
+                  <Link href="/newsletter" className="mt-1 inline-block text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+                    Subscribe to stay in the loop
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
