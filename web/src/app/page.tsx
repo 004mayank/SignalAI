@@ -169,10 +169,7 @@ export default async function HomePage() {
           <h2 className="mt-3 text-center text-2xl font-bold text-white md:text-3xl">22 sources. One feed.</h2>
           <p className="mt-3 text-center text-sm text-zinc-500">Research labs, open-source repos, community forums, and key voices across the AI ecosystem.</p>
         </div>
-        <div className="space-y-3">
-          <Marquee items={SOURCES} duration={38} />
-          <Marquee items={[...SOURCES].reverse()} duration={38} reverse />
-        </div>
+        <Marquee items={SOURCES} duration={65} />
       </section>
 
       {/* Who Is It For */}

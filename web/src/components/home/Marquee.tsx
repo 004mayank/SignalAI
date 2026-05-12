@@ -1,7 +1,7 @@
 "use client";
 
 const PILL_CLASS =
-  "inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400";
+  "inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-5 py-2.5 text-base font-medium text-zinc-300";
 
 interface Props {
   items: string[];
