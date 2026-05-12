@@ -35,10 +35,10 @@ export type ArticleFilters = {
 };
 
 export async function getArticles(filters: ArticleFilters = {}, userId?: string) {
-  const freeGateCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  const recencyCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // last 30 days
   const where: Prisma.ArticleWhereInput = {
     duplicateOfId: null,
-    ...(filters.tier !== "pro" ? { publishedAt: { lt: freeGateCutoff } } : {}),
+    publishedAt: { gte: recencyCutoff },
   };
 
   if (userId) {
@@ -57,7 +57,7 @@ export async function getArticles(filters: ArticleFilters = {}, userId?: string)
 
   return prisma.article.findMany({
     where,
-    orderBy: { createdAt: "desc" },
+    orderBy: { publishedAt: "desc" },
     take: 100,
     select: ARTICLE_SELECT,
   });
@@ -71,9 +71,10 @@ export async function getTrendingNow(limit = 3) {
 }
 
 export async function getInsightOfTheDay() {
+  const recencyCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   return prisma.article.findFirst({
-    where: { duplicateOfId: null },
-    orderBy: [{ finalScore: "desc" }, { createdAt: "desc" }],
+    where: { duplicateOfId: null, publishedAt: { gte: recencyCutoff } },
+    orderBy: [{ finalScore: "desc" }, { publishedAt: "desc" }],
     select: ARTICLE_SELECT,
   });
 }
