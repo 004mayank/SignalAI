@@ -1,24 +1,92 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useRef } from "react";
+
+const DAYS_OPTIONS = [
+  { label: "Today", value: 1 },
+  { label: "7d", value: 7 },
+  { label: "30d", value: 30 },
+  { label: "90d", value: 90 },
+] as const;
+
 export function Topbar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const currentDays = Number(searchParams.get("days") ?? "1") || 1;
+  const currentSearch = searchParams.get("search") ?? "";
+
+  const pushParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, val] of Object.entries(updates)) {
+        if (val === null || val === "") {
+          params.delete(key);
+        } else {
+          params.set(key, val);
+        }
+      }
+      router.push(`/feed?${params.toString()}`);
+    },
+    [router, searchParams],
+  );
+
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      pushParams({ search: value || null });
+    }, 400);
+  }
+
+  function handleDaySelect(days: number) {
+    pushParams({ days: days === 1 ? null : String(days) });
+  }
+
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex w-full max-w-md items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
-        <div className="text-zinc-500">⌕</div>
-        <input
-          placeholder="Search signals…"
-          className="w-full bg-transparent text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none"
-        />
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex w-full max-w-md items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-3 py-2">
+          <div className="text-zinc-500">⌕</div>
+          <input
+            placeholder="Search signals…"
+            defaultValue={currentSearch}
+            onChange={handleSearchChange}
+            className="w-full bg-transparent text-sm text-zinc-200 placeholder:text-zinc-500 focus:outline-none"
+          />
+        </div>
+
+        <div className="hidden items-center gap-3 md:flex">
+          <div className="flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+            <span className="h-2 w-2 rounded-full bg-lime-400" />
+            <span className="uppercase tracking-wide">Live feed active</span>
+          </div>
+          <button className="rounded-full border border-white/5 bg-white/5 px-3 py-2 text-xs text-zinc-300 hover:bg-white/10">
+            ⚙
+          </button>
+        </div>
       </div>
 
-      <div className="hidden items-center gap-3 md:flex">
-        <div className="flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-          <span className="h-2 w-2 rounded-full bg-lime-400" />
-          <span className="uppercase tracking-wide">Live feed active</span>
-        </div>
-        <button className="rounded-full border border-white/5 bg-white/5 px-3 py-2 text-xs text-zinc-300 hover:bg-white/10">
-          ⚙
-        </button>
+      {/* Timeline filter */}
+      <div className="flex items-center gap-2">
+        {DAYS_OPTIONS.map(({ label, value }) => {
+          const active = currentDays === value;
+          return (
+            <button
+              key={value}
+              onClick={() => handleDaySelect(value)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                active
+                  ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

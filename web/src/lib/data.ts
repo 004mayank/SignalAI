@@ -32,10 +32,13 @@ export type ArticleFilters = {
   layer?: SourceLayer;
   minRelevance?: number;
   tier?: "free" | "pro";
+  days?: number;   // 1 | 7 | 30 | 90, defaults to 1 (Today)
+  search?: string; // title full-text search
 };
 
 export async function getArticles(filters: ArticleFilters = {}, userId?: string) {
-  const recencyCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // last 7 days
+  const days = filters.days && [1, 7, 30, 90].includes(filters.days) ? filters.days : 1;
+  const recencyCutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const where: Prisma.ArticleWhereInput = {
     duplicateOfId: null,
     publishedAt: { gte: recencyCutoff },
@@ -54,6 +57,9 @@ export async function getArticles(filters: ArticleFilters = {}, userId?: string)
   if (filters.sourceType) where.sourceType = filters.sourceType;
   if (filters.layer) where.layer = filters.layer;
   if (filters.minRelevance) where.finalScore = { gte: filters.minRelevance };
+  if (filters.search?.trim()) {
+    where.title = { contains: filters.search.trim(), mode: "insensitive" };
+  }
 
   return prisma.article.findMany({
     where,

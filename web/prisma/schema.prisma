@@ -83,6 +83,7 @@ model Article {
   createdAt          DateTime        @default(now()) @map("created_at")
 
   @@index([createdAt])
+  @@index([publishedAt])
   @@index([category, finalScore])
   @@index([clusterId])
   @@map("articles")

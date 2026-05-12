@@ -7,7 +7,7 @@ import { TrendingGrid } from "@/components/trending-grid";
 import { getArticles, getInsightOfTheDay } from "@/lib/data";
 
 export default async function FeedPage(props: {
-  searchParams: Promise<{ category?: string; min?: string; source_type?: string; layer?: string }>;
+  searchParams: Promise<{ category?: string; min?: string; source_type?: string; layer?: string; days?: string; search?: string }>;
 }) {
   const sp = await props.searchParams;
   const allowed = ["Agents", "LLMs", "Infra", "UX", "Other"] as const;
@@ -24,8 +24,12 @@ export default async function FeedPage(props: {
   ] as const;
   const layer = allowedLayers.find((l) => l === sp.layer);
 
+  const allowedDays = [1, 7, 30, 90] as const;
+  const days = allowedDays.find((d) => d === Number(sp.days)) ?? 1;
+  const search = sp.search?.trim() || undefined;
+
   const [articles, insight] = await Promise.all([
-    getArticles({ category, minRelevance, sourceType, layer }),
+    getArticles({ category, minRelevance, sourceType, layer, days, search }),
     getInsightOfTheDay(),
   ]);
 
