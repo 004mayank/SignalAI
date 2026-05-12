@@ -12,10 +12,8 @@ const COLORS = [
   "#34d399", // emerald
 ];
 
-const NODE_COUNT = 90;
-const SPHERE_R = 155;
-const CONNECT_DIST_SQ = 85 * 85;
-const FOV = 420;
+const NODE_COUNT = 110;
+const FOV_FACTOR = 2.8;   // FOV = min(W,H) * FOV_FACTOR
 const ROT_SPEED = 0.0012;
 
 interface Node {
@@ -56,6 +54,9 @@ export function NodeMesh() {
 
     const CX = W / 2;
     const CY = H / 2;
+    const SPHERE_R = Math.min(W, H) * 0.42;
+    const CONNECT_DIST_SQ = (SPHERE_R * 0.58) ** 2;
+    const FOV = Math.min(W, H) * FOV_FACTOR;
 
     const nodes: Node[] = Array.from({ length: NODE_COUNT }, () => {
       const [bx, by, bz] = onSphere(SPHERE_R);
