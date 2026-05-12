@@ -1,77 +1,76 @@
 import { prisma } from "@/lib/db";
-import { computeVelocityPercent } from "./trend-stats";
-
-function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-/**
- * Backfill TrendStat records for a single trend by counting actual articles
- * per calendar day (using publishedAt) for the last `lookbackDays` days.
- * Then recompute and persist velocity on the Trend record.
- */
-async function backfillTrendStats(
-  trendId: string,
-  clusterId: string,
-  lookbackDays = 14,
-) {
-  const today = startOfDay(new Date());
-
-  for (let i = 0; i < lookbackDays; i++) {
-    const dayStart = new Date(today);
-    dayStart.setDate(today.getDate() - i);
-    const dayEnd = new Date(dayStart);
-    dayEnd.setDate(dayStart.getDate() + 1);
-
-    const count = await prisma.article.count({
-      where: {
-        clusterId,
-        duplicateOfId: null,
-        publishedAt: { gte: dayStart, lt: dayEnd },
-      },
-    });
-
-    // Only upsert days that actually have articles to keep TrendStat lean
-    if (count > 0) {
-      await prisma.trendStat.upsert({
-        where: { trendId_date: { trendId, date: dayStart } },
-        create: { trendId, date: dayStart, articleCount: count },
-        update: { articleCount: count },
-      });
-    }
-  }
-}
 
 export type RecalcResult = {
   total: number;
   updated: number;
-  velocities: Array<{ trendId: string; name: string; velocity: number }>;
+  velocities: Array<{
+    trendId: string;
+    name: string;
+    velocity: number;
+    avgScore: number;
+    articleCount: number;
+  }>;
 };
 
 /**
- * Backfill TrendStat history from real article data, then recompute
- * and persist velocity for every Trend in the database.
+ * Compute velocity for every Trend using a normalized signal-strength score:
+ *
+ *  signal = avg(finalScore) of non-duplicate articles in the cluster
+ *           × log(1 + articleCount)   ← rewards clusters with more articles
+ *
+ * Then normalize linearly so the strongest cluster = 1.0 (100%) and the
+ * weakest = 0.0 (0%).  This gives a stable, meaningful range even when
+ * we don't yet have enough temporal history for week-over-week velocity.
+ *
+ * Once temporal data accumulates (14+ days), the ingestion pipeline's
+ * computeVelocityPercent() will provide true growth rates.
  */
 export async function recalcAllVelocities(): Promise<RecalcResult> {
   const trends = await prisma.trend.findMany({
     select: { id: true, clusterId: true, name: true },
   });
 
+  // Aggregate finalScore and article count per cluster in one pass
+  const clusterStats = await Promise.all(
+    trends.map(async (trend) => {
+      const agg = await prisma.article.aggregate({
+        where: { clusterId: trend.clusterId, duplicateOfId: null },
+        _avg: { finalScore: true },
+        _count: { id: true },
+      });
+      const avgScore = agg._avg.finalScore ?? 0;
+      const count = agg._count.id;
+      // Weight by article count so clusters with more coverage rank higher
+      const signal = avgScore * Math.log1p(count);
+      return { trend, avgScore, count, signal };
+    }),
+  );
+
+  const signals = clusterStats.map((s) => s.signal);
+  const minSignal = Math.min(...signals);
+  const maxSignal = Math.max(...signals);
+  const range = maxSignal - minSignal || 1;
+
   const velocities: RecalcResult["velocities"] = [];
 
-  for (const trend of trends) {
-    await backfillTrendStats(trend.id, trend.clusterId);
-    const v = await computeVelocityPercent(trend.id);
-    await prisma.trend.update({
-      where: { id: trend.id },
-      data: { velocity: v },
-    });
-    velocities.push({ trendId: trend.id, name: trend.name, velocity: v });
-  }
+  await Promise.all(
+    clusterStats.map(async ({ trend, avgScore, count, signal }) => {
+      const velocity = (signal - minSignal) / range; // 0–1
+      await prisma.trend.update({
+        where: { id: trend.id },
+        data: { velocity },
+      });
+      velocities.push({
+        trendId: trend.id,
+        name: trend.name,
+        velocity,
+        avgScore,
+        articleCount: count,
+      });
+    }),
+  );
 
-  const updated = velocities.filter((t) => t.velocity !== 0).length;
-
+  velocities.sort((a, b) => b.velocity - a.velocity);
+  const updated = velocities.filter((t) => t.velocity > 0).length;
   return { total: trends.length, updated, velocities };
 }

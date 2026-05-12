@@ -37,13 +37,15 @@ export default async function TrendsPage() {
                     </div>
                     <div className="mt-2 text-lg font-semibold text-white">{t.name}</div>
                   </div>
-                  <div className="rounded-xl bg-black/40 px-3 py-2 text-xs text-zinc-200 ring-1 ring-white/10">
+                  <div className="rounded-xl bg-black/40 px-3 py-2 text-xs text-zinc-200 ring-1 ring-white/10 text-center min-w-[56px]">
                     <div className="text-[10px] uppercase tracking-wide text-zinc-400">Velocity</div>
-                    <div className="text-sm font-semibold text-cyan-200">
-                      {t.velocity === 0 && t.articleCount <= 1
-                        ? "New"
-                        : `${Math.round(t.velocity * 100) > 0 ? "+" : ""}${Math.round(t.velocity * 100)}%`}
-                    </div>
+                    {t.velocity === 0 ? (
+                      <div className="text-sm font-semibold text-zinc-500">—</div>
+                    ) : (
+                      <div className="text-sm font-semibold text-cyan-200">
+                        {Math.round(t.velocity * 100)}%
+                      </div>
+                    )}
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-300">{t.summary}</p>
