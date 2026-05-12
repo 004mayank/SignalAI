@@ -176,18 +176,24 @@ export default async function HomePage() {
         </div>
         <div className="space-y-3">
           {/* Row 1: right → left */}
-          <div className="overflow-hidden">
-            <div className="flex gap-4 whitespace-nowrap" style={{ animation: 'marquee 38s linear infinite' }}>
+          <div className="overflow-hidden w-full">
+            <div style={{
+              display: 'flex', gap: '1rem', width: 'max-content',
+              animation: 'marquee 40s linear infinite',
+            }}>
               {SOURCES_MARQUEE.map((s, i) => (
-                <span key={i} className="inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 hover:border-cyan-500/30 hover:text-white transition-colors cursor-default">{s}</span>
+                <span key={i} style={{ flexShrink: 0 }} className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 cursor-default">{s}</span>
               ))}
             </div>
           </div>
           {/* Row 2: left → right */}
-          <div className="overflow-hidden">
-            <div className="flex gap-4 whitespace-nowrap" style={{ animation: 'marquee 38s linear infinite reverse' }}>
+          <div className="overflow-hidden w-full">
+            <div style={{
+              display: 'flex', gap: '1rem', width: 'max-content',
+              animation: 'marquee 40s linear infinite reverse',
+            }}>
               {[...SOURCES_MARQUEE].reverse().map((s, i) => (
-                <span key={i} className="inline-flex shrink-0 items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 hover:border-purple-500/30 hover:text-white transition-colors cursor-default">{s}</span>
+                <span key={i} style={{ flexShrink: 0 }} className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 cursor-default">{s}</span>
               ))}
             </div>
           </div>
