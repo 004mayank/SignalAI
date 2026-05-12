@@ -46,9 +46,9 @@ export default async function HomePage() {
       {/* Sticky nav */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-[#07090d]/80 backdrop-blur-md">
         <div className="flex items-center justify-between px-8 py-4">
-          <Link href="/" className="flex items-center gap-1">
-            <span className="text-lg font-black tracking-tight text-white">SIGNAL</span>
-            <span className="text-lg font-black tracking-tight text-amber-400">AI</span>
+          <Link href="/" className="flex items-center gap-1 font-[family-name:var(--font-orbitron)] tracking-widest">
+            <span className="text-lg font-black text-white">SIGNAL</span>
+            <span className="text-lg font-black text-cyan-400">AI</span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -229,9 +229,9 @@ export default async function HomePage() {
       <footer className="border-t border-white/5 px-8 py-12 lg:px-16">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-1">
-              <span className="text-base font-black tracking-tight text-white">SIGNAL</span>
-              <span className="text-base font-black tracking-tight text-amber-400">AI</span>
+            <div className="flex items-center gap-1 font-[family-name:var(--font-orbitron)] tracking-widest">
+              <span className="text-base font-black text-white">SIGNAL</span>
+              <span className="text-base font-black text-cyan-400">AI</span>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-zinc-600">Signal for the AI era. Built for developers, PMs, and founders who need to stay ahead.</p>
           </div>

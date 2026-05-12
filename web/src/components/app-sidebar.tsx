@@ -46,9 +46,9 @@ export function AppSidebar({ showFilters = true }: Props) {
   return (
     <aside className="hidden w-[280px] shrink-0 border-r border-white/5 bg-black/40 px-4 py-5 md:block">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <span className="text-lg font-black tracking-tight text-white">SIGNAL</span>
-          <span className="text-lg font-black tracking-tight text-amber-400">AI</span>
+        <div className="flex items-center gap-1 font-[family-name:var(--font-orbitron)] tracking-widest">
+          <span className="text-lg font-black text-white">SIGNAL</span>
+          <span className="text-lg font-black text-cyan-400">AI</span>
         </div>
       </div>
 
