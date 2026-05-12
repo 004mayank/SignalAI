@@ -13,6 +13,11 @@ function scoreLabel(score: number) {
   return `${clamp(score, 0, 5).toFixed(1)}/5`;
 }
 
+// LLMs occasionally emit em-dashes despite instructions. Strip them at render time.
+function clean(text: string): string {
+  return text.replace(/—/g, ", ").replace(/\s{2,}/g, " ").trim();
+}
+
 function categoryColor(category: string) {
   const map: Record<string, string> = {
     Agents: "text-lime-200 bg-lime-400/10 ring-lime-400/30",
@@ -108,7 +113,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* Key quote */}
           <blockquote className="mt-6 max-w-3xl border-l-2 border-cyan-400/50 pl-5 text-lg leading-relaxed text-zinc-300 italic">
-            {deep.key_quote}
+            {clean(deep.key_quote)}
           </blockquote>
 
           {/* Signal strength */}
@@ -129,19 +134,19 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* Introduction */}
           <section>
-            <p className="text-xl leading-[1.85] text-zinc-200">{deep.introduction}</p>
+            <p className="text-xl leading-[1.85] text-zinc-200">{clean(deep.introduction)}</p>
           </section>
 
           {/* TL;DR callout */}
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-6">
             <div className="mb-3 text-sm font-bold uppercase tracking-widest text-cyan-300">TL;DR</div>
-            <p className="text-lg leading-relaxed text-zinc-100">{article.summary}</p>
+            <p className="text-lg leading-relaxed text-zinc-100">{clean(article.summary)}</p>
           </div>
 
           {/* What Happened */}
           <section>
             <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-zinc-500">What happened</h2>
-            <p className="text-lg leading-[1.9] text-zinc-300">{deep.what_happened_deep}</p>
+            <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.what_happened_deep)}</p>
           </section>
 
           <div className="h-px bg-white/5" />
@@ -149,7 +154,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
           {/* The Bigger Picture */}
           <section>
             <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-lime-400">The bigger picture</h2>
-            <p className="text-lg leading-[1.9] text-zinc-300">{deep.bigger_picture}</p>
+            <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.bigger_picture)}</p>
           </section>
 
           <div className="h-px bg-white/5" />
@@ -157,7 +162,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
           {/* Technical Deep Dive */}
           <section>
             <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-purple-400">Technical deep dive</h2>
-            <p className="text-lg leading-[1.9] text-zinc-300">{deep.technical_deep_dive}</p>
+            <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.technical_deep_dive)}</p>
           </section>
 
           <div className="h-px bg-white/5" />
@@ -171,7 +176,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-xs font-bold text-amber-300">
                     {i + 1}
                   </span>
-                  <p className="text-base leading-relaxed text-zinc-300">{app}</p>
+                  <p className="text-base leading-relaxed text-zinc-300">{clean(app)}</p>
                 </div>
               ))}
             </div>
@@ -188,7 +193,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                   <svg className="mt-1.5 shrink-0 text-cyan-400" width="16" height="16" viewBox="0 0 14 14" fill="none">
                     <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <p className="text-base leading-relaxed text-zinc-200">{action}</p>
+                  <p className="text-base leading-relaxed text-zinc-200">{clean(action)}</p>
                 </div>
               ))}
             </div>
