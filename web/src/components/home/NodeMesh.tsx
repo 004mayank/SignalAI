@@ -27,7 +27,8 @@ interface Node {
 function onSphere(r: number): [number, number, number] {
   const theta = Math.random() * 2 * Math.PI;
   const phi = Math.acos(2 * Math.random() - 1);
-  const sr = r * (0.55 + 0.45 * Math.random());
+  // 80% on surface shell, 20% interior — keeps silhouette spherical
+  const sr = Math.random() < 0.8 ? r * (0.9 + 0.1 * Math.random()) : r * (0.4 + 0.4 * Math.random());
   return [
     sr * Math.sin(phi) * Math.cos(theta),
     sr * Math.sin(phi) * Math.sin(theta),
@@ -56,8 +57,7 @@ export function NodeMesh() {
     // Use 48% of smallest dimension for sphere, capped generously
     const SPHERE_R = Math.min(W, H) * 0.48;
     const CONNECT_DIST_SQ = (SPHERE_R * 0.62) ** 2;
-    // Lower FOV = more dramatic perspective depth
-    const FOV = Math.min(W, H) * 1.8;
+    const FOV = Math.min(W, H) * 2.4;
 
     const nodes: Node[] = Array.from({ length: NODE_COUNT }, () => {
       const [bx, by, bz] = onSphere(SPHERE_R);
