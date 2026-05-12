@@ -3,16 +3,11 @@ import { getArticles } from "@/lib/data";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { WhoIsItFor } from "@/components/home/WhoIsItFor";
 import { NodeMesh } from "@/components/home/NodeMesh";
+import { Marquee } from "@/components/home/Marquee";
 
 export const revalidate = 300;
 
-const SOURCES_MARQUEE = [
-  "arXiv", "OpenAI Blog", "DeepMind Blog", "GitHub Trending",
-  "Hugging Face", "Reddit ML", "Reddit LocalLLaMA", "Reddit Artificial",
-  "Hacker News", "Product Hunt", "Meta AI Blog", "Mistral Blog",
-  "LangChain Blog", "Weights and Biases", "Microsoft AI Blog", "Google AI Blog",
-  "X: Sam Altman", "X: Andrej Karpathy", "X: Yann LeCun",
-  // duplicate for seamless loop
+const SOURCES = [
   "arXiv", "OpenAI Blog", "DeepMind Blog", "GitHub Trending",
   "Hugging Face", "Reddit ML", "Reddit LocalLLaMA", "Reddit Artificial",
   "Hacker News", "Product Hunt", "Meta AI Blog", "Mistral Blog",
@@ -175,28 +170,8 @@ export default async function HomePage() {
           <p className="mt-3 text-center text-sm text-zinc-500">Research labs, open-source repos, community forums, and key voices across the AI ecosystem.</p>
         </div>
         <div className="space-y-3">
-          {/* Row 1: right → left */}
-          <div className="overflow-hidden w-full">
-            <div style={{
-              display: 'flex', gap: '1rem', width: 'max-content',
-              animation: 'marquee 40s linear infinite',
-            }}>
-              {SOURCES_MARQUEE.map((s, i) => (
-                <span key={i} style={{ flexShrink: 0 }} className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 cursor-default">{s}</span>
-              ))}
-            </div>
-          </div>
-          {/* Row 2: left → right */}
-          <div className="overflow-hidden w-full">
-            <div style={{
-              display: 'flex', gap: '1rem', width: 'max-content',
-              animation: 'marquee 40s linear infinite reverse',
-            }}>
-              {[...SOURCES_MARQUEE].reverse().map((s, i) => (
-                <span key={i} style={{ flexShrink: 0 }} className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-400 cursor-default">{s}</span>
-              ))}
-            </div>
-          </div>
+          <Marquee items={SOURCES} duration={38} />
+          <Marquee items={[...SOURCES].reverse()} duration={38} reverse />
         </div>
       </section>
 
