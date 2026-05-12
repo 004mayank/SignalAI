@@ -16,7 +16,7 @@ export default function NewsletterPage() {
         </h1>
 
         <p className="mt-5 text-sm leading-relaxed text-zinc-400">
-          Every Friday, get the top 5 trending AI developments ranked by velocity — with executive
+          Every Friday, get the top 5 trending AI developments ranked by velocity, with executive
           summaries, technical implications, and concrete actions from across 20+ sources including
           arXiv, GitHub, Anthropic, OpenAI, DeepMind, and more.
         </p>
@@ -36,7 +36,7 @@ export default function NewsletterPage() {
           </div>
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-            No fluff — just what matters and why
+            No fluff, just what matters and why
           </div>
         </div>
 

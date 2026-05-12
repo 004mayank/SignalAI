@@ -196,7 +196,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* Source CTA */}
           <div className="rounded-3xl border border-white/5 bg-white/5 p-8 text-center">
-            <p className="text-sm text-zinc-400">Go deeper — read the original source</p>
+            <p className="text-sm text-zinc-400">Go deeper - read the original source</p>
             <a
               href={article.url}
               target="_blank"
