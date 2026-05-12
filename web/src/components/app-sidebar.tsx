@@ -23,7 +23,7 @@ export function AppSidebar({ showFilters = true }: Props) {
     if (value === "" || value === "All") next.delete(key);
     else next.set(key, value);
     // Keep category filters on feed only.
-    router.push(`/?${next.toString()}`);
+    router.push(`/feed?${next.toString()}`);
   }
 
   const navItem = (href: string, label: string) => {
@@ -56,6 +56,7 @@ export function AppSidebar({ showFilters = true }: Props) {
 
       <div className="mt-6 space-y-1">
         {navItem("/", "Home")}
+        {navItem("/feed", "Feed")}
         {navItem("/trends", "Trends")}
         {navItem("/newsletter", "Newsletter")}
       </div>

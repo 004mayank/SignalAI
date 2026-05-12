@@ -58,7 +58,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
       <header className="sticky top-0 z-20 border-b border-white/5 bg-[#07090d]/90 backdrop-blur-md">
         <div className="flex items-center justify-between px-6 py-3">
           <Link
-            href="/"
+            href="/feed"
             className="flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-white"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
@@ -209,8 +209,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
               </svg>
             </a>
             <div className="mt-4">
-              <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-300">
-                ← Back to all signals
+              <Link href="/feed" className="text-xs text-zinc-500 hover:text-zinc-300">
+                Back to all signals
               </Link>
             </div>
           </div>
@@ -277,10 +277,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
             </a>
 
             <Link
-              href="/"
+              href="/feed"
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-sm text-zinc-400 transition-colors hover:text-white"
             >
-              ← All signals
+              All signals
             </Link>
           </div>
         </aside>

@@ -35,7 +35,7 @@ export type ArticleFilters = {
 };
 
 export async function getArticles(filters: ArticleFilters = {}, userId?: string) {
-  const recencyCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // last 30 days
+  const recencyCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // last 7 days
   const where: Prisma.ArticleWhereInput = {
     duplicateOfId: null,
     publishedAt: { gte: recencyCutoff },
@@ -71,7 +71,7 @@ export async function getTrendingNow(limit = 3) {
 }
 
 export async function getInsightOfTheDay() {
-  const recencyCutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const recencyCutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   return prisma.article.findFirst({
     where: { duplicateOfId: null, publishedAt: { gte: recencyCutoff } },
     orderBy: [{ finalScore: "desc" }, { publishedAt: "desc" }],
