@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -27,10 +29,8 @@ export function ArticleCard(props: {
   const a = props.article;
 
   return (
-    <a
-      href={a.url}
-      target="_blank"
-      rel="noreferrer"
+    <Link
+      href={`/article/${a.id}`}
       className="group grid gap-4 rounded-3xl border border-white/5 bg-white/5 p-5 hover:bg-white/10 md:grid-cols-[240px_1fr]"
     >
       {/* Media / score panel (we don't have images yet; keep it as an intentional visual block) */}
@@ -92,6 +92,6 @@ export function ArticleCard(props: {
           </ul>
         </div>
       </div>
-    </a>
+    </Link>
   );
 }

@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 export function Shell(props: { children: React.ReactNode; sidebarFilters?: boolean }) {
   return (
     <div className="min-h-dvh bg-[#07090d] text-zinc-100">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1400px]">
+      <div className="flex min-h-dvh w-full">
         <Suspense fallback={<div className="hidden w-[280px] shrink-0 md:block" />}>
           <AppSidebar showFilters={props.sidebarFilters ?? true} />
         </Suspense>

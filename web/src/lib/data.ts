@@ -78,6 +78,13 @@ export async function getInsightOfTheDay() {
   });
 }
 
+export async function getArticleById(id: string) {
+  return prisma.article.findUnique({
+    where: { id },
+    select: ARTICLE_SELECT,
+  });
+}
+
 export async function getTrendsPage(limit = 50) {
   return prisma.trend.findMany({
     orderBy: [{ velocity: "desc" }, { articleCount: "desc" }],

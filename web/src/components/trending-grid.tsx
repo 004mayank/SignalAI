@@ -47,10 +47,8 @@ export function TrendingGrid(props: { articles: ArticleSummary[] }) {
       ) : (
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           {featured ? (
-            <a
-              href={featured.url}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href={`/article/${featured.id}`}
               className="group relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-cyan-500/10 via-white/5 to-purple-500/10 p-6"
             >
               <div className="absolute inset-0 opacity-30 [background:radial-gradient(600px_circle_at_30%_30%,rgba(34,211,238,0.25),transparent_50%),radial-gradient(600px_circle_at_70%_60%,rgba(168,85,247,0.18),transparent_45%)]" />
@@ -80,16 +78,14 @@ export function TrendingGrid(props: { articles: ArticleSummary[] }) {
                   Source: <span className="text-zinc-200">{featured.source}</span>
                 </div>
               </div>
-            </a>
+            </Link>
           ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
             {rest.map((a) => (
-              <a
+              <Link
                 key={a.id}
-                href={a.url}
-                target="_blank"
-                rel="noreferrer"
+                href={`/article/${a.id}`}
                 className="group rounded-2xl border border-white/5 bg-white/5 p-4 hover:bg-white/10"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -108,7 +104,7 @@ export function TrendingGrid(props: { articles: ArticleSummary[] }) {
                 <div className="mt-3 line-clamp-2 text-xs leading-relaxed text-zinc-400">
                   {a.summary}
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>
