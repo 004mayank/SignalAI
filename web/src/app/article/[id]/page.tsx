@@ -134,13 +134,13 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* TL;DR callout */}
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-6">
-            <div className="mb-3 text-xs font-bold uppercase tracking-widest text-cyan-300">TL;DR</div>
+            <div className="mb-3 text-sm font-bold uppercase tracking-widest text-cyan-300">TL;DR</div>
             <p className="text-lg leading-relaxed text-zinc-100">{article.summary}</p>
           </div>
 
           {/* What Happened */}
           <section>
-            <h2 className="mb-5 text-xs font-bold uppercase tracking-widest text-zinc-500">What happened</h2>
+            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-zinc-500">What happened</h2>
             <p className="text-lg leading-[1.9] text-zinc-300">{deep.what_happened_deep}</p>
           </section>
 
@@ -148,7 +148,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* The Bigger Picture */}
           <section>
-            <h2 className="mb-5 text-xs font-bold uppercase tracking-widest text-lime-400">The bigger picture</h2>
+            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-lime-400">The bigger picture</h2>
             <p className="text-lg leading-[1.9] text-zinc-300">{deep.bigger_picture}</p>
           </section>
 
@@ -156,7 +156,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* Technical Deep Dive */}
           <section>
-            <h2 className="mb-5 text-xs font-bold uppercase tracking-widest text-purple-400">Technical deep dive</h2>
+            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-purple-400">Technical deep dive</h2>
             <p className="text-lg leading-[1.9] text-zinc-300">{deep.technical_deep_dive}</p>
           </section>
 
@@ -164,7 +164,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* Real-world applications */}
           <section>
-            <h2 className="mb-5 text-xs font-bold uppercase tracking-widest text-amber-400">Real-world applications</h2>
+            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-amber-400">Real-world applications</h2>
             <div className="space-y-4">
               {deep.real_world_applications.map((app, i) => (
                 <div key={i} className="flex gap-4 rounded-xl border border-white/5 bg-white/5 p-5">
@@ -181,7 +181,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
           {/* What to do now */}
           <section>
-            <h2 className="mb-5 text-xs font-bold uppercase tracking-widest text-cyan-400">What to do now</h2>
+            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-cyan-400">What to do now</h2>
             <div className="space-y-4">
               {deep.what_to_do_now.map((action, i) => (
                 <div key={i} className="flex gap-4 items-start">
