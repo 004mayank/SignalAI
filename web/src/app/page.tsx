@@ -48,7 +48,7 @@ export default async function HomePage() {
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
-            {[["Feed", "/feed"], ["Trends", "/trends"], ["Newsletter", "/newsletter"]].map(([label, href]) => (
+            {[["Feed", "/feed"], ["Trends", "/trends"], ["Newsletter", "/newsletter"], ["About", "/about"]].map(([label, href]) => (
               <Link key={href} href={href} className="rounded-lg px-4 py-2 text-sm text-zinc-400 hover:bg-white/5 hover:text-white transition-colors">
                 {label}
               </Link>
@@ -210,7 +210,7 @@ export default async function HomePage() {
           <div>
             <div className="mb-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Product</div>
             <div className="space-y-2">
-              {[["Feed", "/feed"], ["Trends", "/trends"], ["Newsletter", "/newsletter"]].map(([label, href]) => (
+              {[["Feed", "/feed"], ["Trends", "/trends"], ["Newsletter", "/newsletter"], ["About", "/about"]].map(([label, href]) => (
                 <Link key={href} href={href} className="block text-sm text-zinc-500 hover:text-white transition-colors">{label}</Link>
               ))}
             </div>

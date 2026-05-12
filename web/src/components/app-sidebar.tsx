@@ -57,6 +57,7 @@ export function AppSidebar({ showFilters = true }: Props) {
         {navItem("/feed", "Feed")}
         {navItem("/trends", "Trends")}
         {navItem("/newsletter", "Newsletter")}
+        {navItem("/about", "About")}
       </div>
 
       {showFilters ? (
