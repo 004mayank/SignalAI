@@ -175,7 +175,8 @@ export async function runIngestion(params?: {
         }
 
         // If duplicate: store it but mark duplicateOfId, no clustering.
-        if (dup && dup.sim >= 0.9) {
+        // Threshold 0.82 catches same-story articles from different sources.
+        if (dup && dup.sim >= 0.82) {
           await prisma.article.create({
             data: {
               title,
