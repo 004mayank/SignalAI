@@ -81,6 +81,12 @@ export async function runIngestion(params?: {
           content,
         });
 
+        // Drop non-AI content immediately — no embedding, no DB write.
+        if (!ai.is_ai_relevant || ai.relevance_score < 2) {
+          skipped++;
+          continue;
+        }
+
         const embedding = await embedText(`${title}\n\n${content}`);
 
         // Dedup via embeddings (compare against recent items).
@@ -104,6 +110,12 @@ export async function runIngestion(params?: {
           sourceWeight: source.weight,
           engagementScore: engScore,
         });
+
+        // Drop low-signal articles before any DB writes.
+        if (finalScore < 2) {
+          skipped++;
+          continue;
+        }
 
         // If duplicate: store it but mark duplicateOfId, no clustering.
         if (dup && dup.sim >= 0.9) {

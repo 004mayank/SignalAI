@@ -4,6 +4,7 @@ import { getOpenAIClient } from "@/lib/openai";
 import { truncate } from "@/lib/text";
 
 export const ArticleAIResultSchema = z.object({
+  is_ai_relevant: z.boolean(),
   tldr: z.string().min(1),
   what_happened: z.string().min(1),
   why_it_matters: z.string().min(1),
@@ -28,6 +29,7 @@ export async function analyzeArticleWithLLM(params: {
   // If no OpenAI key is configured, fall back to a deterministic mock.
   if (!openai) {
     return {
+      is_ai_relevant: true,
       tldr: truncate(params.content || params.title, 180),
       what_happened: truncate(params.content || params.title, 260),
       why_it_matters: "Helps track meaningful changes in the AI ecosystem without reading everything.",
@@ -41,20 +43,26 @@ export async function analyzeArticleWithLLM(params: {
   }
 
   const system =
-    "You are SignalAI, an AI trend intelligence analyst. " +
-    "Given an AI-related update, extract structured, high-signal insights. " +
+    "You are SignalAI, an AI trend intelligence analyst and strict content filter. " +
+    "Your job is to extract insights from genuine AI technology news AND to reject noise. " +
+    "AI-relevant content includes: new models, papers, research breakthroughs, AI tools/frameworks/libraries, " +
+    "product launches with AI at the core, AI infrastructure, agent systems, and applied AI use cases. " +
+    "NOT AI-relevant: conference logistics, visa issues, job postings, community drama, general programming " +
+    "unrelated to AI, opinion pieces without new technical substance, events/meetups, and off-topic posts " +
+    "that happen to appear in AI communities. Be strict — when in doubt, mark as not relevant. " +
     "Be concise, factual, and avoid hype.";
 
   const user = `Title: ${params.title}\nSource: ${params.source}\nURL: ${params.url}\n\nContent:\n${truncate(
     params.content,
     6000,
   )}\n\nReturn JSON with exactly these keys and constraints:
+- is_ai_relevant: boolean — true ONLY if this is genuinely about AI technology, models, tools, research, or direct AI applications. false for logistics, visa issues, job posts, community meta, events, or anything not substantively about AI itself.
 - tldr: string (1-2 sentences)
 - what_happened: string (factual summary)
 - why_it_matters: string (significance)
 - use_case: string (practical application)
 - category: MUST be exactly one of: "Agents", "LLMs", "Infra", "UX", "Other"
-- relevance_score: integer from 1 to 5 (1=low, 5=high) — MUST NOT exceed 5
+- relevance_score: integer from 1 to 5 (1=low, 5=high) — MUST NOT exceed 5. Score 1-2 for tangentially related content, 3-4 for solid AI news, 5 only for major breakthroughs.
 - impact_level: MUST be exactly one of: "High", "Medium", "Low"
 - actionable_takeaway: string (what to do with this)
 - target_persona: MUST be exactly one of: "Dev", "PM", "Founder"`;
