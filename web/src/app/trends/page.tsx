@@ -40,8 +40,9 @@ export default async function TrendsPage() {
                   <div className="rounded-xl bg-black/40 px-3 py-2 text-xs text-zinc-200 ring-1 ring-white/10">
                     <div className="text-[10px] uppercase tracking-wide text-zinc-400">Velocity</div>
                     <div className="text-sm font-semibold text-cyan-200">
-                      {Math.round(t.velocity * 100) > 0 ? "+" : ""}
-                      {Math.round(t.velocity * 100)}%
+                      {t.velocity === 0 && t.articleCount <= 1
+                        ? "New"
+                        : `${Math.round(t.velocity * 100) > 0 ? "+" : ""}${Math.round(t.velocity * 100)}%`}
                     </div>
                   </div>
                 </div>

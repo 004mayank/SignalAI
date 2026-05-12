@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useRef } from "react";
 
 const DAYS_OPTIONS = [
@@ -12,6 +12,7 @@ const DAYS_OPTIONS = [
 
 export function Topbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -28,7 +29,7 @@ export function Topbar() {
           params.set(key, val);
         }
       }
-      router.push(`/feed?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`);
     },
     [router, searchParams],
   );
