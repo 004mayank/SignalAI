@@ -82,7 +82,7 @@ const TECH = [
 const SYMPTOMS = [
   { dot: "bg-amber-400", title: "Information overload", body: "22+ relevant sources publishing daily. No human reads all of it without burning out." },
   { dot: "bg-rose-400", title: "Stale intelligence", body: "By the time a trend surfaces on social media, the builders already acted on it 72 hours ago." },
-  { dot: "bg-purple-400", title: "No structure", body: "Raw feeds give you links, not answers. What happened, why it matters, what to do -- those are on you." },
+  { dot: "bg-purple-400", title: "No structure", body: "Raw feeds give you links, not answers. What happened, why it matters, what to do - those are on you." },
   { dot: "bg-zinc-500", title: "Context switching", body: "Jumping between arXiv, HuggingFace, Reddit, and GitHub every morning is a half-day gone." },
 ];
 
@@ -122,7 +122,7 @@ export default function AboutPage() {
             <span className="text-cyan-300">We built the radar.</span>
           </h1>
           <p className="mt-6 text-lg leading-relaxed text-zinc-400">
-            SignalAI exists for one reason: to give developers, PMs, and founders a continuous, structured view of what is actually happening in AI -- without the noise, the doomscrolling, or the FOMO.
+            SignalAI exists for one reason: to give developers, PMs, and founders a continuous, structured view of what is actually happening in AI - without the noise, the doomscrolling, or the FOMO.
           </p>
         </div>
       </section>
@@ -234,6 +234,23 @@ export default function AboutPage() {
               <div>
                 <p className="text-base font-bold text-white">Mayank Malviya</p>
                 <p className="mt-0.5 text-xs text-zinc-500 uppercase tracking-widest">Founder</p>
+                <div className="mt-3 flex justify-center gap-3">
+                  <a href="https://www.linkedin.com/in/mayank-malviya-pm/" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-cyan-400 transition-colors" aria-label="LinkedIn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </a>
+                  <a href="https://x.com/wassupiammayank" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-cyan-400 transition-colors" aria-label="X / Twitter">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </a>
+                  <a href="https://github.com/004mayank" target="_blank" rel="noreferrer" className="text-zinc-500 hover:text-cyan-400 transition-colors" aria-label="GitHub">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+                    </svg>
+                  </a>
+                </div>
               </div>
               <div className="flex flex-wrap justify-center gap-2 text-xs text-zinc-500">
                 <span className="rounded-full border border-white/8 bg-white/5 px-3 py-1">Product</span>
@@ -245,7 +262,7 @@ export default function AboutPage() {
             {/* Story text */}
             <div>
               <div className="space-y-5 text-[15px] leading-relaxed text-zinc-400">
-                <p>Hi, I am Mayank. SignalAI started as a personal tool because I was spending two to three hours every morning trying to keep up with AI research, open-source releases, and company announcements -- and most of what surfaced was noise anyway. The signal-to-noise ratio was broken.</p>
+                <p>Hi, I am Mayank. SignalAI started as a personal tool because I was spending two to three hours every morning trying to keep up with AI research, open-source releases, and company announcements - and most of what surfaced was noise anyway. The signal-to-noise ratio was broken.</p>
                 <p>The first version was a scraper and a spreadsheet. The second added an LLM extraction step. The third added embeddings and clustering. At some point it became a product worth sharing, so I shipped it.</p>
                 <p>This is still a one-person operation. I build it, use it daily, and iterate based on what actually works. That means your feedback goes directly to the person writing the code.</p>
               </div>
@@ -282,7 +299,7 @@ export default function AboutPage() {
           <div className="pointer-events-none absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-purple-500/5 blur-3xl" />
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-cyan-400">
-              Start now -- it is free
+              Start now - it is free
             </div>
             <h2 className="mt-5 text-3xl font-bold text-white md:text-4xl">
               Stop finding out <span className="text-cyan-300">late.</span>
