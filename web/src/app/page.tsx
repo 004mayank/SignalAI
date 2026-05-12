@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getArticles } from "@/lib/data";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { WhoIsItFor } from "@/components/home/WhoIsItFor";
+import { NodeMesh } from "@/components/home/NodeMesh";
 
 export const revalidate = 300;
 
@@ -106,23 +107,11 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Radar */}
+          {/* 3D Node Mesh */}
           <div className="flex items-center justify-center">
-            <div className="relative h-80 w-80 md:h-96 md:w-96">
+            <div className="relative h-[420px] w-full max-w-[480px]">
               <div className="absolute inset-0 rounded-full bg-cyan-500/5 blur-3xl" />
-              {[100, 78, 56, 34].map((size, i) => (
-                <div key={i} className="absolute rounded-full border border-cyan-500/15"
-                  style={{ width: `${size}%`, height: `${size}%`, top: `${(100 - size) / 2}%`, left: `${(100 - size) / 2}%` }} />
-              ))}
-              <div className="absolute inset-0 animate-radar">
-                <div className="absolute left-1/2 top-1/2 h-[46%] w-px origin-top bg-gradient-to-b from-cyan-400/60 to-transparent" />
-              </div>
-              <div className="absolute top-[28%] left-[62%] h-2 w-2 rounded-full bg-cyan-400 animate-ping [animation-duration:2.1s]" />
-              <div className="absolute top-[60%] left-[30%] h-1.5 w-1.5 rounded-full bg-purple-400 animate-ping [animation-duration:3.4s] [animation-delay:0.8s]" />
-              <div className="absolute top-[42%] left-[72%] h-1.5 w-1.5 rounded-full bg-lime-400 animate-ping [animation-duration:2.8s] [animation-delay:1.5s]" />
-              <div className="absolute top-[70%] left-[58%] h-1 w-1 rounded-full bg-cyan-300 animate-ping [animation-duration:3.1s] [animation-delay:0.4s]" />
-              <div className="absolute top-[22%] left-[38%] h-1 w-1 rounded-full bg-amber-400 animate-ping [animation-duration:2.5s] [animation-delay:1.2s]" />
-              <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400 shadow-lg shadow-cyan-400/50" />
+              <NodeMesh />
             </div>
           </div>
         </div>
