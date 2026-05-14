@@ -2,6 +2,11 @@ import type { SourceConfig } from "@/server/sources/registry";
 import type { NormalizedItem } from "@/server/sources/normalized";
 import { truncate } from "@/lib/text";
 
+// Strip basic HTML tags from Reddit selftext (can contain raw HTML from old posts).
+function stripBasicHtml(s: string): string {
+  return s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
 export async function ingestReddit(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
   const resp = await fetch(source.url, {
     headers: {
@@ -39,11 +44,12 @@ export async function ingestReddit(source: SourceConfig, limit = 20): Promise<No
     const title = d.title;
     if (!url || !title) continue;
 
-    const selftext = d.selftext ? truncate(String(d.selftext), 8000) : "";
+    const selftext = d.selftext ? truncate(stripBasicHtml(String(d.selftext)), 8000) : "";
+    const subreddit = (d.subreddit ?? "").trim() || "unknown";
 
     out.push({
       title,
-      content: selftext || `Subreddit: r/${d.subreddit ?? ""}\n${title}`,
+      content: selftext || `Subreddit: r/${subreddit}\n${title}`,
       source: source.name,
       source_type: source.type,
       layer: source.layer,

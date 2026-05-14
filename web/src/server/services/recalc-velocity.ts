@@ -46,7 +46,12 @@ export async function recalcAllVelocities(): Promise<RecalcResult> {
     }),
   );
 
+  if (clusterStats.length === 0) {
+    return { total: 0, updated: 0, velocities: [] };
+  }
+
   const signals = clusterStats.map((s) => s.signal);
+  // Math.min/max of an empty spread returns ±Infinity — guard above prevents that.
   const minSignal = Math.min(...signals);
   const maxSignal = Math.max(...signals);
   const range = maxSignal - minSignal || 1;

@@ -28,8 +28,9 @@ const QuerySchema = z.object({
   category: CategorySchema.optional(),
   source_type: SourceTypeSchema.optional(),
   layer: LayerSchema.optional(),
-  min_relevance: z.string().optional(),
-  limit: z.string().optional(),
+  // Coerce strings to numbers and validate range so NaN never reaches Prisma.
+  min_relevance: z.coerce.number().min(1).max(5).optional().catch(undefined),
+  limit: z.coerce.number().int().min(1).max(100).optional().catch(undefined),
   user_id: z.string().optional(),
 });
 
@@ -44,8 +45,8 @@ export async function GET(req: Request) {
     user_id: url.searchParams.get("user_id") ?? undefined,
   });
 
-  const minRelevance = parsed.min_relevance ? Number(parsed.min_relevance) : undefined;
-  const limit = parsed.limit ? Math.min(100, Math.max(1, Number(parsed.limit))) : 50;
+  const minRelevance = parsed.min_relevance;
+  const limit = parsed.limit ?? 50;
 
   // Freemium gate: free tier sees articles older than 48 hours.
   const tier = (req as Request & { headers: Headers }).headers.get("x-user-tier") ?? "free";

@@ -95,7 +95,12 @@ export async function analyzeArticleWithLLM(params: {
   });
 
   const text = resp.choices[0]?.message?.content ?? "{}";
-  const json = JSON.parse(text);
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`LLM returned invalid JSON for article analysis: ${text.slice(0, 200)}`);
+  }
   return ArticleAIResultSchema.parse(json);
 }
 
@@ -179,21 +184,38 @@ Return JSON with exactly these keys:
     response_format: { type: "json_object" },
   });
 
-  const raw = JSON.parse(resp.choices[0]?.message?.content ?? "{}");
+  let raw: Record<string, unknown> = {};
+  try {
+    raw = JSON.parse(resp.choices[0]?.message?.content ?? "{}");
+  } catch {
+    // Malformed JSON — fall through to field-level fallbacks below.
+  }
+
+  const str = (v: unknown, fallback: string): string =>
+    typeof v === "string" && v.length > 0 ? v : fallback;
 
   return {
-    introduction: raw.introduction ?? params.summary,
-    what_happened_deep: raw.what_happened_deep ?? params.whatHappened ?? params.summary,
-    bigger_picture: raw.bigger_picture ?? params.whyItMatters ?? "",
-    technical_deep_dive: raw.technical_deep_dive ?? "",
-    real_world_applications: Array.isArray(raw.real_world_applications) ? raw.real_world_applications : [params.useCase ?? ""],
-    what_to_do_now: Array.isArray(raw.what_to_do_now) ? raw.what_to_do_now : [params.actionableTakeaway ?? ""],
-    key_quote: raw.key_quote ?? params.summary,
+    introduction: str(raw.introduction, params.summary),
+    what_happened_deep: str(raw.what_happened_deep, params.whatHappened ?? params.summary),
+    bigger_picture: str(raw.bigger_picture, params.whyItMatters ?? ""),
+    technical_deep_dive: str(raw.technical_deep_dive, ""),
+    real_world_applications: Array.isArray(raw.real_world_applications)
+      ? (raw.real_world_applications as string[])
+      : [params.useCase ?? ""],
+    what_to_do_now: Array.isArray(raw.what_to_do_now)
+      ? (raw.what_to_do_now as string[])
+      : [params.actionableTakeaway ?? ""],
+    key_quote: str(raw.key_quote, params.summary),
   };
 }
 
-export const generateDeepArticle = unstable_cache(
-  _generateDeepArticle,
-  ["deep-article"],
-  { revalidate: 86400 }, // cache for 24h per article
-);
+// Wrap unstable_cache so the article ID is part of the cache key.
+// The bare ["deep-article"] key caused every article to share one cache slot —
+// the second article viewed would silently return the first article's deep dive.
+export function generateDeepArticle(params: Parameters<typeof _generateDeepArticle>[0]) {
+  return unstable_cache(
+    _generateDeepArticle,
+    ["deep-article", params.id],
+    { revalidate: 86400 },
+  )(params);
+}
