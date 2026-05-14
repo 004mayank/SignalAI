@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import {
-  renderNewsletterHtml,
-  renderNewsletterSubject,
-  renderPreviewText,
-} from "@/lib/newsletter-template";
+import { renderNewsletterHtml } from "@/lib/newsletter-template";
 import { requireAdminKey } from "@/lib/admin-auth";
 
 // GET /api/admin/newsletter-preview — render newsletter HTML without sending

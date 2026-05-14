@@ -31,7 +31,7 @@ export function Topbar() {
       }
       router.push(`${pathname}?${params.toString()}`);
     },
-    [router, searchParams],
+    [router, searchParams, pathname],
   );
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {

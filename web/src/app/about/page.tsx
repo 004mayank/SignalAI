@@ -178,7 +178,7 @@ export default function AboutPage() {
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Under the Hood</p>
         <h2 className="mt-3 text-3xl font-bold text-white md:text-4xl">Built on three technical layers.</h2>
         <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-zinc-400">
-          No dashboards built from hand-curated RSS feeds. No hourly manual curation. SignalAI's pipeline is code from ingestion to briefing, using modern LLM tooling and vector search at every step.
+          No dashboards built from hand-curated RSS feeds. No hourly manual curation. SignalAI&apos;s pipeline is code from ingestion to briefing, using modern LLM tooling and vector search at every step.
         </p>
         <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {TECH.map((t) => (
