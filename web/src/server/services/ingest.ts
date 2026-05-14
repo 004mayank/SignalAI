@@ -123,6 +123,8 @@ export async function runIngestion(params?: {
       // Collect items that pass all pre-embedding gates. We batch-embed them
       // all at once in Phase B instead of one API call per article.
       const phaseA: PhaseAItem[] = [];
+      // Dedup URLs within the current batch (catches reposts in the same feed).
+      const batchUrls = new Set<string>();
 
       for (const item of normalized) {
         const url = item.url;
@@ -142,6 +144,15 @@ export async function runIngestion(params?: {
           continue;
         }
 
+        // Batch-level URL dedup — prevents unique-constraint violations if a
+        // feed returns the same URL twice in one response.
+        if (batchUrls.has(url)) {
+          console.debug("[ingest] skip: duplicate url in batch", { url, source: source.name });
+          skipped++;
+          continue;
+        }
+        batchUrls.add(url);
+
         const exists = await prisma.article.findUnique({ where: { url } });
         if (exists) {
           console.debug("[ingest] skip: url already ingested", { url, source: source.name });
@@ -149,12 +160,15 @@ export async function runIngestion(params?: {
           continue;
         }
 
-        const ai = await analyzeArticleWithLLM({
-          title,
-          source: item.source,
-          url,
-          content,
-        });
+        let ai: ArticleAIResult;
+        try {
+          ai = await analyzeArticleWithLLM({ title, source: item.source, url, content });
+        } catch (err) {
+          // LLM transient failure — skip this article, don't fail the whole source.
+          console.warn("[ingest] LLM analysis failed, skipping article", { title, error: String(err) });
+          skipped++;
+          continue;
+        }
 
         // Gate 2 — LLM relevance flag + per-source score floor
         if (!ai.is_ai_relevant || ai.relevance_score < minLlmScore(source.type)) {
@@ -169,13 +183,18 @@ export async function runIngestion(params?: {
       // ── Phase B: batch embed all survivors in one API call ──────────────
       // Fetch recent articles once per source (not per article) for dedup.
       if (phaseA.length > 0) {
+        // Truncate title + content separately before joining so both contribute
+        // to the embedding rather than long content silently eating the title.
         const embeddings = await embedTexts(
-          phaseA.map(({ title, content }) => `${title}\n\n${content}`),
+          phaseA.map(({ title, content }) => `${title.slice(0, 200)}\n\n${content.slice(0, 7800)}`),
         );
 
+        // Narrow dedup window to 48 hours — older articles shouldn't block new
+        // coverage of a topic, and this cuts the comparison set dramatically.
+        const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
         const recent = await prisma.article.findMany({
+          where: { createdAt: { gte: twoDaysAgo } },
           orderBy: { createdAt: "desc" },
-          take: 300,
           select: { id: true, embedding: true },
         });
 

@@ -125,9 +125,14 @@ async function generateTrendMeta(clusterId: string): Promise<{ name: string; sum
     response_format: { type: "json_object" },
   });
 
-  const json = JSON.parse(resp.choices[0]?.message?.content ?? "{}");
+  let json: Record<string, unknown> = {};
+  try {
+    json = JSON.parse(resp.choices[0]?.message?.content ?? "{}");
+  } catch {
+    console.warn("[trend-engine] JSON parse failed for trend meta; using fallback");
+  }
   return {
-    name: String(json.name).slice(0, 60),
-    summary: String(json.summary).slice(0, 220),
+    name: (typeof json.name === "string" ? json.name : reps[0]?.title ?? "Emerging trend").slice(0, 60),
+    summary: (typeof json.summary === "string" ? json.summary : reps[0]?.summary ?? "Clustered AI updates that appear to be related.").slice(0, 220),
   };
 }

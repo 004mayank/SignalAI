@@ -24,8 +24,10 @@ export async function embedText(input: string): Promise<number[]> {
   if (!openai) {
     // Deterministic pseudo-embedding fallback for local dev without API key.
     // DO NOT use in production; it exists to keep the system runnable.
+    // Dimension matches text-embedding-3-small (1536) so cosine similarity and
+    // meanVector work correctly if real and pseudo embeddings are ever mixed.
     const seed = Array.from(truncate(input, 512)).reduce((a, c) => a + c.charCodeAt(0), 0);
-    const dim = 256;
+    const dim = 1536;
     return Array.from({ length: dim }, (_, i) => {
       const v = Math.sin(seed * (i + 1)) * 0.5 + Math.cos(seed / (i + 1)) * 0.5;
       return Number(v.toFixed(6));

@@ -35,8 +35,12 @@ export async function computeVelocityPercent(trendId: string): Promise<number> {
   const prevStart = new Date(today);
   prevStart.setDate(prevStart.getDate() - 14);
 
+  // Include today in the current window so intra-day velocity isn't understated.
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
   const current = await prisma.trendStat.aggregate({
-    where: { trendId, date: { gte: currentStart, lt: today } },
+    where: { trendId, date: { gte: currentStart, lt: tomorrow } },
     _sum: { articleCount: true },
   });
 
