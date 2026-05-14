@@ -5,12 +5,7 @@ import {
   renderNewsletterSubject,
   renderPreviewText,
 } from "@/lib/newsletter-template";
-
-function requireAdminKey(req: Request): boolean {
-  const key = process.env.ADMIN_API_KEY;
-  if (!key) return true;
-  return req.headers.get("x-admin-key") === key;
-}
+import { requireAdminKey } from "@/lib/admin-auth";
 
 // GET /api/admin/newsletter-preview — render newsletter HTML without sending
 export async function GET(req: Request) {

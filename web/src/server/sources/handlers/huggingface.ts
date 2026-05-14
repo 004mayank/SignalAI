@@ -8,6 +8,9 @@ interface HFModel {
   lastModified?: string;
   downloads?: number;
   likes?: number;
+  pipeline_tag?: string;
+  tags?: string[];
+  author?: string;
 }
 
 export async function ingestHuggingFace(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
@@ -36,14 +39,17 @@ export async function ingestHuggingFace(source: SourceConfig, limit = 20): Promi
           : ["huggingface", modelId];
       const title = `${name} by ${org}`;
       const modelUrl = `https://huggingface.co/${modelId}`;
+      const pipelineInfo = model.pipeline_tag ? ` Pipeline: ${model.pipeline_tag}.` : "";
+      const tagsInfo = model.tags?.length ? ` Tags: ${model.tags.slice(0, 5).join(", ")}.` : "";
+      const content = `Trending model on Hugging Face: ${modelId}.${pipelineInfo} Downloads: ${model.downloads ?? 0}, Likes: ${model.likes ?? 0}.${tagsInfo}`;
       return {
         title,
-        content: `Trending model on Hugging Face: ${modelId}. Downloads: ${model.downloads ?? 0}, Likes: ${model.likes ?? 0}.`,
+        content,
         source: source.name,
         source_type: source.type,
         layer: source.layer,
         url: modelUrl,
-        created_at: model.lastModified ? new Date(model.lastModified) : new Date(),
+        created_at: model.createdAt ? new Date(model.createdAt) : model.lastModified ? new Date(model.lastModified) : new Date(),
         engagement: {
           stars: model.likes,
         },

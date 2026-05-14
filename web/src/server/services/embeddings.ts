@@ -1,6 +1,24 @@
 import { getOpenAIClient } from "@/lib/openai";
 import { truncate } from "@/lib/text";
 
+/**
+ * Embed multiple texts in a single OpenAI API call.
+ * Preserves input order. Falls back to individual calls without an API key.
+ */
+export async function embedTexts(inputs: string[]): Promise<number[][]> {
+  if (inputs.length === 0) return [];
+  const openai = getOpenAIClient();
+  if (!openai) {
+    return Promise.all(inputs.map((input) => embedText(input)));
+  }
+  const resp = await openai.embeddings.create({
+    model: process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small",
+    input: inputs.map((s) => truncate(s, 8000)),
+  });
+  // OpenAI guarantees order matches input order
+  return resp.data.map((d) => d.embedding);
+}
+
 export async function embedText(input: string): Promise<number[]> {
   const openai = getOpenAIClient();
   if (!openai) {

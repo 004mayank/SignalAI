@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { SOURCES } from "@/server/sources/registry";
-
-function requireAdminKey(req: Request): boolean {
-  const key = process.env.ADMIN_API_KEY;
-  if (!key) return true; // not configured — allow in dev
-  return req.headers.get("x-admin-key") === key;
-}
+import { requireAdminKey } from "@/lib/admin-auth";
 
 // GET /api/admin/sources — source health overview
 export async function GET(req: Request) {

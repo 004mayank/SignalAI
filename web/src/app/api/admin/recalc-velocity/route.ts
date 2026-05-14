@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { recalcAllVelocities } from "@/server/services/recalc-velocity";
-
-function requireAdminKey(req: Request): boolean {
-  const key = process.env.ADMIN_API_KEY;
-  if (!key) return true;
-  return req.headers.get("x-admin-key") === key;
-}
+import { requireAdminKey } from "@/lib/admin-auth";
 
 // POST /api/admin/recalc-velocity — backfill TrendStat from articles and recompute velocity
 export async function POST(req: Request) {

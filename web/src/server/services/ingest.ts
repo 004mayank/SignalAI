@@ -1,12 +1,22 @@
 import { prisma } from "@/lib/db";
-import { analyzeArticleWithLLM } from "@/lib/ai";
-import { embedText } from "@/server/services/embeddings";
+import { analyzeArticleWithLLM, type ArticleAIResult } from "@/lib/ai";
+import { embedTexts } from "@/server/services/embeddings";
 import { cosineSimilarity } from "@/server/services/similarity";
 import { assignCluster, updateClusterCentroid, upsertTrendForCluster } from "@/server/services/trend-engine";
 import { computeVelocityPercent, upsertTodayTrendStat } from "@/server/services/trend-stats";
 import { engagementScore, finalRelevanceScore } from "@/server/services/scoring";
 import { SOURCES, type SourceConfig } from "@/server/sources/registry";
 import { ingestSource } from "@/server/sources/ingest";
+import type { NormalizedItem } from "@/server/sources/normalized";
+
+// Items that passed gates 1 + 2 and are ready for batch embedding
+type PhaseAItem = {
+  item: NormalizedItem;
+  ai: ArticleAIResult;
+  url: string;
+  title: string;
+  content: string;
+};
 
 async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -109,24 +119,32 @@ export async function runIngestion(params?: {
       const normalized = await fetchWithRetry(() => ingestSource(source, limit));
       fetched += normalized.length;
 
+      // ── Phase A: cheap filters + LLM gate ──────────────────────────────
+      // Collect items that pass all pre-embedding gates. We batch-embed them
+      // all at once in Phase B instead of one API call per article.
+      const phaseA: PhaseAItem[] = [];
+
       for (const item of normalized) {
         const url = item.url;
         const title = item.title;
         const content = item.content;
 
         if (!url || !title || !content) {
+          console.debug("[ingest] skip: missing url/title/content", { source: source.name });
           skipped++;
           continue;
         }
 
         // Gate 1 — cheap title pre-filter (no API call needed)
         if (isObviousNoise(title, source.type)) {
+          console.debug("[ingest] skip: noise filter", { title, source: source.name });
           skipped++;
           continue;
         }
 
         const exists = await prisma.article.findUnique({ where: { url } });
         if (exists) {
+          console.debug("[ingest] skip: url already ingested", { url, source: source.name });
           skipped++;
           continue;
         }
@@ -140,43 +158,91 @@ export async function runIngestion(params?: {
 
         // Gate 2 — LLM relevance flag + per-source score floor
         if (!ai.is_ai_relevant || ai.relevance_score < minLlmScore(source.type)) {
+          console.debug("[ingest] skip: llm rejected", { title, is_ai_relevant: ai.is_ai_relevant, score: ai.relevance_score, minScore: minLlmScore(source.type) });
           skipped++;
           continue;
         }
 
-        const embedding = await embedText(`${title}\n\n${content}`);
+        phaseA.push({ item, ai, url, title, content });
+      }
 
-        // Dedup via embeddings (compare against recent items).
+      // ── Phase B: batch embed all survivors in one API call ──────────────
+      // Fetch recent articles once per source (not per article) for dedup.
+      if (phaseA.length > 0) {
+        const embeddings = await embedTexts(
+          phaseA.map(({ title, content }) => `${title}\n\n${content}`),
+        );
+
         const recent = await prisma.article.findMany({
           orderBy: { createdAt: "desc" },
           take: 300,
           select: { id: true, embedding: true },
         });
-        const dup = recent
-          .map((r) => ({ id: r.id, sim: cosineSimilarity(embedding, r.embedding) }))
-          .sort((a, b) => b.sim - a.sim)[0];
 
-        const engScore = engagementScore({
-          stars: item.engagement.stars,
-          upvotes: item.engagement.upvotes,
-          comments: item.engagement.comments,
-        });
+        // ── Phase C: dedup + score + persist ─────────────────────────────
+        for (let i = 0; i < phaseA.length; i++) {
+          const { item, ai, url, title, content } = phaseA[i];
+          const embedding = embeddings[i];
 
-        const finalScore = finalRelevanceScore({
-          llmScore: ai.relevance_score,
-          sourceWeight: source.weight,
-          engagementScore: engScore,
-        });
+          const dup = recent
+            .map((r) => ({ id: r.id, sim: cosineSimilarity(embedding, r.embedding) }))
+            .sort((a, b) => b.sim - a.sim)[0];
 
-        // Gate 3 — final score floor (post-engagement weighting)
-        if (finalScore < MIN_FINAL_SCORE) {
-          skipped++;
-          continue;
-        }
+          const engScore = engagementScore({
+            stars: item.engagement.stars,
+            upvotes: item.engagement.upvotes,
+            comments: item.engagement.comments,
+          });
 
-        // If duplicate: store it but mark duplicateOfId, no clustering.
-        // Threshold 0.82 catches same-story articles from different sources.
-        if (dup && dup.sim >= 0.82) {
+          const finalScore = finalRelevanceScore({
+            llmScore: ai.relevance_score,
+            sourceWeight: source.weight,
+            engagementScore: engScore,
+          });
+
+          // Gate 3 — final score floor (post-engagement weighting)
+          if (finalScore < MIN_FINAL_SCORE) {
+            console.debug("[ingest] skip: final score below threshold", { title, finalScore, MIN_FINAL_SCORE });
+            skipped++;
+            continue;
+          }
+
+          // If duplicate: store it but mark duplicateOfId, no clustering.
+          // Threshold 0.82 catches same-story articles from different sources.
+          if (dup && dup.sim >= 0.82) {
+            console.debug("[ingest] skip: semantic duplicate", { title, dupId: dup.id, sim: dup.sim.toFixed(3) });
+            await prisma.article.create({
+              data: {
+                title,
+                url,
+                source: item.source,
+                sourceType: item.source_type,
+                layer: item.layer,
+                engagementStars: item.engagement.stars,
+                engagementUpvotes: item.engagement.upvotes,
+                engagementComments: item.engagement.comments,
+                content,
+                summary: ai.tldr,
+                whatHappened: ai.what_happened,
+                whyItMatters: ai.why_it_matters,
+                useCase: ai.use_case,
+                actionableTakeaway: ai.actionable_takeaway,
+                impactLevel: ai.impact_level,
+                targetPersona: ai.target_persona,
+                category: ai.category,
+                llmScore: ai.relevance_score,
+                finalScore,
+                embedding,
+                duplicateOfId: dup.id,
+                publishedAt: item.created_at,
+              },
+            });
+            skipped++;
+            continue;
+          }
+
+          const { clusterId } = await assignCluster({ category: ai.category, embedding, threshold: 0.8 });
+
           await prisma.article.create({
             data: {
               title,
@@ -199,48 +265,17 @@ export async function runIngestion(params?: {
               llmScore: ai.relevance_score,
               finalScore,
               embedding,
-              duplicateOfId: dup.id,
+              clusterId,
               publishedAt: item.created_at,
             },
           });
-          skipped++;
-          continue;
+
+          await updateClusterCentroid(clusterId);
+          await upsertTrendForCluster({ clusterId, category: ai.category });
+          affectedClusterIds.add(clusterId);
+
+          created++;
         }
-
-        const { clusterId } = await assignCluster({ category: ai.category, embedding, threshold: 0.8 });
-
-        await prisma.article.create({
-          data: {
-            title,
-            url,
-            source: item.source,
-            sourceType: item.source_type,
-            layer: item.layer,
-            engagementStars: item.engagement.stars,
-            engagementUpvotes: item.engagement.upvotes,
-            engagementComments: item.engagement.comments,
-            content,
-            summary: ai.tldr,
-            whatHappened: ai.what_happened,
-            whyItMatters: ai.why_it_matters,
-            useCase: ai.use_case,
-            actionableTakeaway: ai.actionable_takeaway,
-            impactLevel: ai.impact_level,
-            targetPersona: ai.target_persona,
-            category: ai.category,
-            llmScore: ai.relevance_score,
-            finalScore,
-            embedding,
-            clusterId,
-            publishedAt: item.created_at,
-          },
-        });
-
-        await updateClusterCentroid(clusterId);
-        await upsertTrendForCluster({ clusterId, category: ai.category });
-        affectedClusterIds.add(clusterId);
-
-        created++;
       }
 
       // Record successful source health
