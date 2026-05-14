@@ -33,7 +33,12 @@ function impactColor(level: string) {
 }
 
 export default async function HomePage() {
-  const articles = await getArticles({});
+  let articles: Awaited<ReturnType<typeof getArticles>> = [];
+  try {
+    articles = await getArticles({});
+  } catch {
+    // DB unavailable — render empty state rather than crashing
+  }
   const liveSignals = articles.slice(0, 6);
 
   return (
