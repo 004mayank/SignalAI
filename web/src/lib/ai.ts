@@ -101,7 +101,34 @@ export async function analyzeArticleWithLLM(params: {
   } catch {
     throw new Error(`LLM returned invalid JSON for article analysis: ${text.slice(0, 200)}`);
   }
-  return ArticleAIResultSchema.parse(json);
+
+  // Lenient parse: coerce enum values and fall back on invalid/missing fields so
+  // a single wrong enum value from the LLM doesn't silently discard the article.
+  const LenientSchema = z.object({
+    is_ai_relevant: z.boolean().catch(false),
+    tldr: z.string().catch(""),
+    what_happened: z.string().catch(""),
+    why_it_matters: z.string().catch(""),
+    use_case: z.string().catch(""),
+    category: z.enum(["Agents", "LLMs", "Infra", "UX", "Other"]).catch("Other"),
+    relevance_score: z.number().int().min(1).max(5).catch(1),
+    impact_level: z.enum(["High", "Medium", "Low"]).catch("Low"),
+    actionable_takeaway: z.string().catch(""),
+    target_persona: z.enum(["Dev", "PM", "Founder"]).catch("Dev"),
+  });
+  const result = LenientSchema.parse(json);
+  return {
+    is_ai_relevant: result.is_ai_relevant,
+    tldr: result.tldr || "No summary available.",
+    what_happened: result.what_happened || result.tldr || "No details available.",
+    why_it_matters: result.why_it_matters || "Significance not assessed.",
+    use_case: result.use_case || "No use case identified.",
+    category: result.category,
+    relevance_score: result.relevance_score,
+    impact_level: result.impact_level,
+    actionable_takeaway: result.actionable_takeaway || "Review and evaluate applicability.",
+    target_persona: result.target_persona,
+  };
 }
 
 export type DeepArticle = {

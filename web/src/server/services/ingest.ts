@@ -22,6 +22,10 @@ async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// Module-level lock: prevents two overlapping runIngestion() calls in the same
+// Node process (e.g. cron fires while a previous run is still in-flight).
+let ingestionRunning = false;
+
 // ─── Pre-filter ────────────────────────────────────────────────────────────
 // Cheap title-level gate that runs BEFORE any LLM or embedding call.
 // Returns true when the item is obvious noise and should be dropped immediately.
@@ -89,6 +93,24 @@ export async function runIngestion(params?: {
   // Backward compatible: RSS feeds list
   feeds?: string[];
   // New: restrict to certain registry source names
+  sourceNames?: string[];
+  limitPerSource?: number;
+}) {
+  if (ingestionRunning) {
+    console.warn("[ingest] Skipping run — previous ingestion still in progress.");
+    return { sources: [], fetched: 0, created: 0, skipped: 0, errors: [], skippedReason: "concurrent" };
+  }
+  ingestionRunning = true;
+
+  try {
+  return await _runIngestion(params);
+  } finally {
+    ingestionRunning = false;
+  }
+}
+
+async function _runIngestion(params?: {
+  feeds?: string[];
   sourceNames?: string[];
   limitPerSource?: number;
 }) {

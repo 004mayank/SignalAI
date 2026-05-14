@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 
 // All date arithmetic uses UTC to avoid DST shifts and timezone-dependent
@@ -21,11 +22,26 @@ export async function upsertTodayTrendStat(trendId: string, clusterId: string) {
     },
   });
 
-  await prisma.trendStat.upsert({
-    where: { trendId_date: { trendId, date: today } },
-    create: { trendId, date: today, articleCount: count },
-    update: { articleCount: count },
-  });
+  // Prisma's upsert is not atomic (SELECT then INSERT/UPDATE) so concurrent
+  // calls for the same (trendId, date) can race and hit the unique constraint.
+  // Catch P2002 and fall back to a plain UPDATE — the row was just created by
+  // the concurrent caller, so we know it exists.
+  try {
+    await prisma.trendStat.upsert({
+      where: { trendId_date: { trendId, date: today } },
+      create: { trendId, date: today, articleCount: count },
+      update: { articleCount: count },
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      await prisma.trendStat.update({
+        where: { trendId_date: { trendId, date: today } },
+        data: { articleCount: count },
+      });
+    } else {
+      throw e;
+    }
+  }
 }
 
 export async function computeVelocityPercent(trendId: string): Promise<number> {
