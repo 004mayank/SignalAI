@@ -5,7 +5,7 @@ import { WhoIsItFor } from "@/components/home/WhoIsItFor";
 import { NodeMesh } from "@/components/home/NodeMesh";
 import { Marquee } from "@/components/home/Marquee";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 const SOURCES = [
   "arXiv", "OpenAI Blog", "DeepMind Blog", "GitHub Trending",
