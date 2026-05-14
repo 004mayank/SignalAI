@@ -30,6 +30,12 @@ export async function POST(req: Request) {
       await removeSubscriber(email);
     } catch (err) {
       console.error("Beehiiv unsubscribe error:", err);
+      // Surface the failure — returning 200 here would mislead the client into
+      // thinking the user is unsubscribed when they may still receive emails.
+      return NextResponse.json(
+        { error: "Failed to remove from mailing list. Please try again or contact support." },
+        { status: 502 },
+      );
     }
   }
 

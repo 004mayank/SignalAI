@@ -9,10 +9,13 @@ import {
 
 function weekLabel(): string {
   const now = new Date();
+  // getDay() returns 0=Sunday … 6=Saturday.
+  // daysToMonday: Sun→6, Mon→0, Tue→1, … Sat→5
+  const daysToMonday = now.getDay() === 0 ? 6 : now.getDay() - 1;
   const start = new Date(now);
-  start.setDate(now.getDate() - now.getDay() + 1); // Monday
+  start.setDate(now.getDate() - daysToMonday);
   const end = new Date(start);
-  end.setDate(start.getDate() + 6); // Sunday
+  end.setDate(start.getDate() + 6);
   const fmt = (d: Date) =>
     d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return `${fmt(start)} – ${fmt(end)}, ${now.getFullYear()}`;

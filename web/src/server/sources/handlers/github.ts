@@ -17,7 +17,7 @@ export async function ingestGitHub(source: SourceConfig, limit = 20): Promise<No
       ? ((json as { items: unknown[] }).items as unknown[])
       : [];
 
-  return items.slice(0, limit).map((r0) => {
+  return items.slice(0, limit).flatMap((r0) => {
     const r = r0 as {
       full_name?: string;
       description?: string;
@@ -26,19 +26,21 @@ export async function ingestGitHub(source: SourceConfig, limit = 20): Promise<No
       html_url?: string;
       created_at?: string;
     };
-    const fullName = r.full_name ?? "unknown";
-    const title = `${fullName}: ${r.description ?? ""}`.trim();
-    return {
+    // Skip repos with no name or no valid repo URL.
+    if (!r.full_name || !r.html_url) return [];
+    const title = `${r.full_name}: ${r.description ?? ""}`.trim();
+    const createdAt = r.created_at ? new Date(r.created_at) : new Date();
+    return [{
       title,
-      content: `Repo: ${fullName}\nStars: ${r.stargazers_count ?? 0}\nLanguage: ${r.language ?? ""}\n\n${r.description ?? ""}`.trim(),
+      content: `Repo: ${r.full_name}\nStars: ${r.stargazers_count ?? 0}\nLanguage: ${r.language ?? ""}\n\n${r.description ?? ""}`.trim(),
       source: source.name,
       source_type: source.type,
       layer: source.layer,
-      url: r.html_url ?? source.url,
-      created_at: r.created_at ? new Date(r.created_at) : new Date(),
+      url: r.html_url,
+      created_at: isNaN(createdAt.getTime()) ? new Date() : createdAt,
       engagement: {
         stars: r.stargazers_count ?? 0,
       },
-    } satisfies NormalizedItem;
+    } satisfies NormalizedItem];
   });
 }

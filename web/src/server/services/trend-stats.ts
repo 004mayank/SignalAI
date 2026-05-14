@@ -1,15 +1,17 @@
 import { prisma } from "@/lib/db";
 
-function startOfDay(d: Date) {
+// All date arithmetic uses UTC to avoid DST shifts and timezone-dependent
+// day boundaries. The database stores timestamps in UTC so comparisons are exact.
+function startOfDayUTC(d: Date): Date {
   const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
+  x.setUTCHours(0, 0, 0, 0);
   return x;
 }
 
 export async function upsertTodayTrendStat(trendId: string, clusterId: string) {
-  const today = startOfDay(new Date());
+  const today = startOfDayUTC(new Date());
   const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+  tomorrow.setUTCDate(today.getUTCDate() + 1);
 
   const count = await prisma.article.count({
     where: {
@@ -27,13 +29,13 @@ export async function upsertTodayTrendStat(trendId: string, clusterId: string) {
 }
 
 export async function computeVelocityPercent(trendId: string): Promise<number> {
-  const today = startOfDay(new Date());
+  const today = startOfDayUTC(new Date());
 
   const currentStart = new Date(today);
-  currentStart.setDate(currentStart.getDate() - 7);
+  currentStart.setUTCDate(today.getUTCDate() - 7);
 
   const prevStart = new Date(today);
-  prevStart.setDate(prevStart.getDate() - 14);
+  prevStart.setUTCDate(today.getUTCDate() - 14);
 
   // Include today in the current window so intra-day velocity isn't understated.
   const tomorrow = new Date(today);
