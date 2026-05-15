@@ -59,12 +59,15 @@ export async function analyzeArticleWithLLM(params: {
     "- Conference logistics, visa issues, scheduling, travel\n" +
     "- Job postings, hiring threads, internship announcements\n" +
     "- Community meta: AMA announcements, reading groups, self-promotion threads\n" +
-    "- General software engineering not specific to AI (Docker, WASM, general security)\n" +
+    "- General software engineering not specific to AI (Docker, WASM, Kubernetes, cloud infra)\n" +
+    "- Cybersecurity incidents that do NOT involve AI as the attack vector or defense: database breaches, insider threats, ransomware, phishing, hacking stories — even if the breach affected a tech company\n" +
+    "- General data engineering, data pipelines, SQL, ETL, analytics without AI/ML component\n" +
     "- Marketing copy: 'X tips to...', 'how brands use AI', case studies without technical depth\n" +
     "- Social media / platform news (TikTok bans, Instagram features) unless AI is central\n" +
     "- Opinion pieces, vague commentary, doom/hype posts without factual substance\n" +
     "- Corporate partnerships, data-center expansions, country investments without AI model/product news\n" +
     "- Events, courses, meetups, webinars\n" +
+    "- Crime, politics, economics, or world events that reference technology but are not about AI\n" +
     "\n" +
     "Be strict. When in doubt, reject. One strong signal is worth ten weak ones. " +
     "Be concise, factual, and avoid hype. Never use em-dashes in output.";

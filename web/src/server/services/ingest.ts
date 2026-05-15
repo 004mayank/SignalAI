@@ -55,6 +55,12 @@ const COMMUNITY_NOISE: RegExp[] = [
   /^a hn post with/i,
   /what model (for|should|do) (coding|i use)/i,
   /^screenshots? of/i,
+  // Non-AI cybersecurity / crime / infra stories
+  /wipe[sd]? \d+ (government|corporate|company) database/i,
+  /minutes after being fired|fired.*deleted|deleted.*after.*fired/i,
+  /ransomware|phishing attack|data breach|insider threat|database.*wiped/i,
+  /arrested|indicted|charged|sentenced|convicted|pleaded guilty/i,
+  /\b(sql injection|xss|csrf|buffer overflow|zero.?day exploit)\b(?!.*\b(AI|LLM|model)\b)/i,
 ];
 
 function isObviousNoise(title: string, sourceType: string): boolean {
@@ -70,7 +76,7 @@ function isObviousNoise(title: string, sourceType: string): boolean {
 // Minimum LLM relevance score per source tier.
 // Community sources are noisier so we hold them to a higher bar.
 function minLlmScore(sourceType: string): number {
-  if (sourceType === "hn" || sourceType === "reddit") return 3;
+  if (sourceType === "hn" || sourceType === "reddit") return 4;
   return 2;
 }
 
