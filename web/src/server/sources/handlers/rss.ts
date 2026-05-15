@@ -5,6 +5,24 @@ import { stripHtml, truncate } from "@/lib/text";
 
 const RSS_TIMEOUT_MS = 10_000;
 
+// Sanitize common XML spec violations found in real-world RSS feeds:
+// 1. Unescaped bare & not part of a valid entity reference
+// 2. Malformed XML comments containing -- inside (<!-- foo--bar --> is invalid)
+// 3. Boolean HTML attributes with no value (e.g. <input selected>) — add =""
+function sanitizeXml(xml: string): string {
+  // Fix bare & not already part of &name; or &#123; or &#xAB;
+  xml = xml.replace(/&(?![a-zA-Z#][a-zA-Z0-9#]*;)/g, "&amp;");
+  // Fix malformed comments: -- inside <!-- ... --> is invalid XML
+  xml = xml.replace(/<!--[\s\S]*?-->/g, (c) => c.replace(/--(?!>)/g, "- -"));
+  // Fix boolean attributes: word followed by whitespace or > with no ="..."
+  xml = xml.replace(/<[^>]+>/g, (tag) =>
+    tag.replace(/(\s)([a-zA-Z][\w-]*)(?=[\s/>])/g, (m, sp, attr) =>
+      m.includes("=") ? m : `${sp}${attr}=""`
+    )
+  );
+  return xml;
+}
+
 export async function ingestRSS(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
   // Fetch raw XML ourselves so we can sanitize it before parsing.
   // Some feeds (e.g. LangChain) contain unescaped & that break strict XML parsers.
@@ -21,8 +39,7 @@ export async function ingestRSS(source: SourceConfig, limit = 20): Promise<Norma
   } finally {
     clearTimeout(timer);
   }
-  // Replace bare & that are not already part of a valid XML entity reference.
-  xml = xml.replace(/&(?![a-zA-Z#][a-zA-Z0-9#]*;)/g, "&amp;");
+  xml = sanitizeXml(xml);
 
   const parser = new Parser();
   const feed = await parser.parseString(xml);

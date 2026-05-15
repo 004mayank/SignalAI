@@ -25,8 +25,7 @@ export type SourceConfig = {
 };
 
 export const SOURCES: SourceConfig[] = [
-  // Research — focused on LLMs, agents, and practical ML (cs.AI + cs.LG + cs.CL)
-  // with keyword filter to avoid niche fringe papers
+  // Research — focused on LLMs, agents, and practical ML
   {
     name: "arXiv LLMs",
     type: "arxiv",
@@ -57,6 +56,27 @@ export const SOURCES: SourceConfig[] = [
     weight: 5,
     layer: "labs",
   },
+  {
+    name: "Meta AI Blog",
+    type: "rss",
+    url: "https://engineering.fb.com/category/ml-applications/feed/",
+    weight: 4,
+    layer: "labs",
+  },
+  {
+    name: "Google AI Blog",
+    type: "rss",
+    url: "https://blog.google/innovation-and-ai/technology/ai/rss/",
+    weight: 4,
+    layer: "distribution",
+  },
+  {
+    name: "Microsoft AI Blog",
+    type: "rss",
+    url: "https://blogs.microsoft.com/ai/feed/",
+    weight: 4,
+    layer: "distribution",
+  },
 
   // Builder signals
   {
@@ -69,33 +89,19 @@ export const SOURCES: SourceConfig[] = [
   {
     name: "Hugging Face Models",
     type: "huggingface",
-    url: "https://huggingface.co/models",
+    url: "https://huggingface.co/api/models",
     weight: 5,
     layer: "builder",
   },
+  {
+    name: "LangChain Blog",
+    type: "rss",
+    url: "https://blog.langchain.dev/rss/",
+    weight: 4,
+    layer: "builder",
+  },
 
-  // Community — Reddit via RSS (JSON API returns 403 from server environments)
-  {
-    name: "Reddit MachineLearning",
-    type: "rss",
-    url: "https://www.reddit.com/r/MachineLearning/.rss",
-    weight: 3,
-    layer: "community",
-  },
-  {
-    name: "Reddit LocalLLaMA",
-    type: "rss",
-    url: "https://www.reddit.com/r/LocalLLaMA/.rss",
-    weight: 3,
-    layer: "community",
-  },
-  {
-    name: "Reddit Artificial",
-    type: "rss",
-    url: "https://www.reddit.com/r/artificial/.rss",
-    weight: 3,
-    layer: "community",
-  },
+  // Community
   {
     name: "Hacker News",
     type: "hn",
@@ -111,76 +117,5 @@ export const SOURCES: SourceConfig[] = [
     url: "https://www.producthunt.com/topics/artificial-intelligence",
     weight: 4,
     layer: "startup",
-  },
-
-  // Distribution
-  {
-    name: "Microsoft AI Blog",
-    type: "rss",
-    url: "https://blogs.microsoft.com/ai/feed/",
-    weight: 4,
-    layer: "distribution",
-  },
-  {
-    name: "Google AI Blog",
-    type: "rss",
-    url: "https://blog.google/innovation-and-ai/technology/ai/rss/",
-    weight: 4,
-    layer: "distribution",
-  },
-
-  // Additional Labs
-  {
-    name: "Meta AI Blog",
-    type: "rss",
-    url: "https://engineering.fb.com/category/ml-applications/feed/",
-    weight: 4,
-    layer: "labs",
-  },
-  {
-    name: "Mistral Blog",
-    type: "rss",
-    url: "https://mistral.ai/news/rss.xml",
-    weight: 4,
-    layer: "labs",
-  },
-
-  // Additional Builder signals
-  {
-    name: "LangChain Blog",
-    type: "rss",
-    url: "https://blog.langchain.dev/rss/",
-    weight: 4,
-    layer: "builder",
-  },
-  {
-    name: "Weights & Biases",
-    type: "rss",
-    url: "https://wandb.ai/fully-connected/feed",
-    weight: 3,
-    layer: "builder",
-  },
-
-  // X / Twitter via Nitter RSS — use a more reliable public instance
-  {
-    name: "X: Sam Altman",
-    type: "twitter",
-    url: "https://nitter.poast.org/sama/rss",
-    weight: 4,
-    layer: "community",
-  },
-  {
-    name: "X: Andrej Karpathy",
-    type: "twitter",
-    url: "https://nitter.poast.org/karpathy/rss",
-    weight: 4,
-    layer: "community",
-  },
-  {
-    name: "X: Yann LeCun",
-    type: "twitter",
-    url: "https://nitter.poast.org/ylecun/rss",
-    weight: 4,
-    layer: "community",
   },
 ];
