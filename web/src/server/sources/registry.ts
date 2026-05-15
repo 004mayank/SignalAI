@@ -74,25 +74,25 @@ export const SOURCES: SourceConfig[] = [
     layer: "builder",
   },
 
-  // Community
+  // Community — Reddit via RSS (JSON API returns 403 from server environments)
   {
     name: "Reddit MachineLearning",
-    type: "reddit",
-    url: "https://www.reddit.com/r/MachineLearning.json",
+    type: "rss",
+    url: "https://www.reddit.com/r/MachineLearning/.rss",
     weight: 3,
     layer: "community",
   },
   {
     name: "Reddit LocalLLaMA",
-    type: "reddit",
-    url: "https://www.reddit.com/r/LocalLLaMA.json",
+    type: "rss",
+    url: "https://www.reddit.com/r/LocalLLaMA/.rss",
     weight: 3,
     layer: "community",
   },
   {
     name: "Reddit Artificial",
-    type: "reddit",
-    url: "https://www.reddit.com/r/artificial.json",
+    type: "rss",
+    url: "https://www.reddit.com/r/artificial/.rss",
     weight: 3,
     layer: "community",
   },
@@ -140,7 +140,7 @@ export const SOURCES: SourceConfig[] = [
   {
     name: "Mistral Blog",
     type: "rss",
-    url: "https://mistral.ai/feed.xml",
+    url: "https://mistral.ai/news/rss.xml",
     weight: 4,
     layer: "labs",
   },
@@ -161,25 +161,25 @@ export const SOURCES: SourceConfig[] = [
     layer: "builder",
   },
 
-  // X / Twitter via Nitter RSS (key AI accounts)
+  // X / Twitter via Nitter RSS — use a more reliable public instance
   {
     name: "X: Sam Altman",
     type: "twitter",
-    url: "https://nitter.net/sama/rss",
+    url: "https://nitter.poast.org/sama/rss",
     weight: 4,
     layer: "community",
   },
   {
     name: "X: Andrej Karpathy",
     type: "twitter",
-    url: "https://nitter.net/karpathy/rss",
+    url: "https://nitter.poast.org/karpathy/rss",
     weight: 4,
     layer: "community",
   },
   {
     name: "X: Yann LeCun",
     type: "twitter",
-    url: "https://nitter.net/ylecun/rss",
+    url: "https://nitter.poast.org/ylecun/rss",
     weight: 4,
     layer: "community",
   },

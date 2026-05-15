@@ -14,7 +14,7 @@ interface HFModel {
 }
 
 export async function ingestHuggingFace(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  const url = `https://huggingface.co/api/models?sort=trending&limit=${limit}&direction=-1`;
+  const url = `https://huggingface.co/api/models?sort=trending&limit=${limit}`;
   const resp = await fetch(url, {
     headers: { "User-Agent": "SignalAI/1.0 (+https://signalai.app)" },
   });

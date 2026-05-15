@@ -6,14 +6,26 @@ import { stripHtml, truncate } from "@/lib/text";
 const RSS_TIMEOUT_MS = 10_000;
 
 export async function ingestRSS(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
+  // Fetch raw XML ourselves so we can sanitize it before parsing.
+  // Some feeds (e.g. LangChain) contain unescaped & that break strict XML parsers.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), RSS_TIMEOUT_MS);
+  let xml: string;
+  try {
+    const resp = await fetch(source.url, {
+      headers: { "User-Agent": "SignalAI/1.0 (+https://signalai.app)" },
+      signal: controller.signal,
+    });
+    if (!resp.ok) throw new Error(`RSS fetch failed: ${resp.status} ${source.url}`);
+    xml = await resp.text();
+  } finally {
+    clearTimeout(timer);
+  }
+  // Replace bare & that are not already part of a valid XML entity reference.
+  xml = xml.replace(/&(?![a-zA-Z#][a-zA-Z0-9#]*;)/g, "&amp;");
+
   const parser = new Parser();
-  // rss-parser's parseURL has no built-in timeout; race against a rejection.
-  const feed = await Promise.race([
-    parser.parseURL(source.url),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`RSS timeout: ${source.url}`)), RSS_TIMEOUT_MS),
-    ),
-  ]);
+  const feed = await parser.parseString(xml);
 
   const items = (feed.items ?? []).slice(0, limit);
   return items
