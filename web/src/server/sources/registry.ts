@@ -93,13 +93,6 @@ export const SOURCES: SourceConfig[] = [
     weight: 5,
     layer: "builder",
   },
-  {
-    name: "LangChain Blog",
-    type: "rss",
-    url: "https://blog.langchain.dev/rss/",
-    weight: 4,
-    layer: "builder",
-  },
 
   // Community
   {
