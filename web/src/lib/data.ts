@@ -98,3 +98,47 @@ export async function getTrendsPage(limit = 50) {
     take: limit,
   });
 }
+
+// Viral source names — repos surfaced by flash/trend detection queries.
+const VIRAL_SOURCE_NAMES = new Set([
+  "GitHub Viral AI Agents",
+  "GitHub Viral LLMs",
+  "GitHub Rising AI Tools",
+  "GitHub Trending AI",
+  "GitHub New MCP Tools",
+  "GitHub Flash Viral AI",
+  "GitHub Flash Viral Agents",
+  "GitHub Flash New MCP",
+  "GitHub Surging AI",
+]);
+
+export type GitHubRepoFilters = {
+  category?: "Agents" | "LLMs" | "Infra" | "UX" | "Other";
+  viralOnly?: boolean;
+  days?: number;
+  limit?: number;
+};
+
+export async function getGitHubRepos(filters: GitHubRepoFilters = {}) {
+  const days = filters.days ?? 30;
+  const limit = filters.limit ?? 60;
+  const recencyCutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+  const where: Prisma.ArticleWhereInput = {
+    sourceType: "github",
+    duplicateOfId: null,
+    createdAt: { gte: recencyCutoff },
+  };
+
+  if (filters.category) where.category = filters.category;
+  if (filters.viralOnly) where.source = { in: Array.from(VIRAL_SOURCE_NAMES) };
+
+  const repos = await prisma.article.findMany({
+    where,
+    orderBy: [{ engagementStars: "desc" }, { finalScore: "desc" }],
+    take: limit,
+    select: ARTICLE_SELECT,
+  });
+
+  return repos;
+}

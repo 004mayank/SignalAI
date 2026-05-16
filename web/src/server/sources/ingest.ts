@@ -10,23 +10,26 @@ import { ingestHuggingFace } from "@/server/sources/handlers/huggingface";
 import { ingestTwitter } from "@/server/sources/handlers/twitter";
 
 export async function ingestSource(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  switch (source.type) {
+  // Resolve function URLs at ingest time so handlers always receive a plain string.
+  const resolvedUrl = typeof source.url === "function" ? source.url() : source.url;
+  const resolved = { ...source, url: resolvedUrl } satisfies SourceConfig;
+  switch (resolved.type) {
     case "rss":
-      return ingestRSS(source, limit);
+      return ingestRSS(resolved, limit);
     case "github":
-      return ingestGitHub(source, limit);
+      return ingestGitHub(resolved, limit);
     case "reddit":
-      return ingestReddit(source, limit);
+      return ingestReddit(resolved, limit);
     case "arxiv":
-      return ingestArxiv(source, limit);
+      return ingestArxiv(resolved, limit);
     case "hn":
-      return ingestHN(source, Math.min(limit, 15));
+      return ingestHN(resolved, Math.min(limit, 15));
     case "producthunt":
-      return ingestProductHunt(source, limit);
+      return ingestProductHunt(resolved, limit);
     case "huggingface":
-      return ingestHuggingFace(source, limit);
+      return ingestHuggingFace(resolved, limit);
     case "twitter":
-      return ingestTwitter(source, limit);
+      return ingestTwitter(resolved, limit);
     default:
       return [];
   }

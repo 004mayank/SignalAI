@@ -12,7 +12,8 @@ export async function ingestTwitter(source: SourceConfig, limit = 20): Promise<N
   const timer = setTimeout(() => controller.abort(), 10_000);
   let xml: string;
   try {
-    const resp = await fetch(source.url, {
+    const resolvedUrl = typeof source.url === "function" ? source.url() : source.url;
+    const resp = await fetch(resolvedUrl, {
       headers: { "User-Agent": "SignalAI/1.0 (+https://signalai.app)" },
       signal: controller.signal,
     });

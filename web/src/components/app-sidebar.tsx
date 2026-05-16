@@ -65,6 +65,7 @@ export function AppSidebar({ showFilters = true }: Props) {
       <div className="mt-6 space-y-1">
         {navItem("/", "Home")}
         {navItem("/feed", "Feed")}
+        {navItem("/repos", "GitHub Repos")}
         {navItem("/trends", "Trends")}
         {navItem("/newsletter", "Newsletter")}
         {navItem("/about", "About")}

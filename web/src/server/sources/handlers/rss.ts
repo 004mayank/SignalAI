@@ -30,11 +30,12 @@ export async function ingestRSS(source: SourceConfig, limit = 20): Promise<Norma
   const timer = setTimeout(() => controller.abort(), RSS_TIMEOUT_MS);
   let xml: string;
   try {
-    const resp = await fetch(source.url, {
+    const resolvedUrl = typeof source.url === "function" ? source.url() : source.url;
+    const resp = await fetch(resolvedUrl, {
       headers: { "User-Agent": "SignalAI/1.0 (+https://signalai.app)" },
       signal: controller.signal,
     });
-    if (!resp.ok) throw new Error(`RSS fetch failed: ${resp.status} ${source.url}`);
+    if (!resp.ok) throw new Error(`RSS fetch failed: ${resp.status} ${resolvedUrl}`);
     xml = await resp.text();
   } finally {
     clearTimeout(timer);

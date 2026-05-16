@@ -10,7 +10,8 @@ function fetchWithTimeout(url: string): Promise<Response> {
 }
 
 export async function ingestHN(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  const resp = await fetchWithTimeout(source.url);
+  const url = typeof source.url === "function" ? source.url() : source.url;
+  const resp = await fetchWithTimeout(url);
   if (!resp.ok) throw new Error(`HN fetch failed: ${resp.status}`);
   const ids = (await resp.json()) as number[];
 

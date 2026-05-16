@@ -4,7 +4,8 @@ import type { NormalizedItem } from "@/server/sources/normalized";
 import { truncate } from "@/lib/text";
 
 export async function ingestArxiv(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  const resp = await fetch(source.url);
+  const url = typeof source.url === "function" ? source.url() : source.url;
+  const resp = await fetch(url);
   if (!resp.ok) throw new Error(`arXiv fetch failed: ${resp.status}`);
   const xml = await resp.text();
 

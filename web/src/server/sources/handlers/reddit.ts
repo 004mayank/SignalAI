@@ -8,7 +8,8 @@ function stripBasicHtml(s: string): string {
 }
 
 export async function ingestReddit(source: SourceConfig, limit = 20): Promise<NormalizedItem[]> {
-  const resp = await fetch(source.url, {
+  const url = typeof source.url === "function" ? source.url() : source.url;
+  const resp = await fetch(url, {
     headers: {
       "User-Agent": "SignalAI/1.0",
       Accept: "application/json",
