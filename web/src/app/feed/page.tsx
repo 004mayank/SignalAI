@@ -40,9 +40,20 @@ export default async function FeedPage(props: {
     getInsightOfTheDay(),
   ]);
 
-  const trendingArticles = [...articles]
-    .sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0))
-    .slice(0, 5);
+  // Pick top 5 by score with at most one article per source for variety.
+  const trendingArticles = (() => {
+    const sorted = [...articles].sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0));
+    const seen = new Set<string>();
+    const result = [];
+    for (const a of sorted) {
+      if (!seen.has(a.source)) {
+        seen.add(a.source);
+        result.push(a);
+        if (result.length === 5) break;
+      }
+    }
+    return result;
+  })();
   const trendingIds = new Set(trendingArticles.map((a) => a.id));
   const insightId = insight?.id;
   const feedArticles = articles.filter((a) => !trendingIds.has(a.id) && a.id !== insightId);
