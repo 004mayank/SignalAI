@@ -32,8 +32,9 @@ export function AppSidebar({ showFilters = true }: Props) {
     const next = new URLSearchParams(sp.toString());
     if (value === "" || value === "All") next.delete(key);
     else next.set(key, value);
-    // Keep category filters on feed only.
-    router.push(`/feed?${next.toString()}`);
+    // Stay on the current filterable page (/feed or /repos); fall back to /feed.
+    const base = pathname === "/repos" ? "/repos" : "/feed";
+    router.push(`${base}?${next.toString()}`);
   }
 
   const navItem = (href: string, label: string) => {
