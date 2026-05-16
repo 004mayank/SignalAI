@@ -26,6 +26,18 @@ function categoryColor(cat: string) {
   return m[cat] ?? m["Other"];
 }
 
+function parseTitle(title: string): { primary: string; repo?: string } {
+  const colonIdx = title.indexOf(": ");
+  if (colonIdx !== -1) {
+    const before = title.slice(0, colonIdx);
+    if (before.includes("/")) {
+      const description = title.slice(colonIdx + 2).replace(/[—–]/g, "-").trim();
+      return { primary: description || before, repo: before };
+    }
+  }
+  return { primary: title.replace(/[—–]/g, "-") };
+}
+
 function impactColor(level: string) {
   if (level === "High") return "text-red-300";
   if (level === "Medium") return "text-amber-300";
@@ -144,7 +156,15 @@ export default async function HomePage() {
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${categoryColor(a.category)}`}>{a.category}</span>
                     </div>
                   </div>
-                  <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-cyan-200">{a.title}</h3>
+                  {(() => {
+                    const { primary, repo } = parseTitle(a.title);
+                    return (
+                      <>
+                        <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-white transition-colors group-hover:text-cyan-200">{primary}</h3>
+                        {repo && <p className="mt-1 line-clamp-1 text-[11px] text-zinc-600 font-mono">{repo}</p>}
+                      </>
+                    );
+                  })()}
                   <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-zinc-400">{a.summary}</p>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-xs text-zinc-600">
