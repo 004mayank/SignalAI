@@ -20,6 +20,10 @@ const VIRAL_SOURCE_NAMES = new Set([
 const CATEGORY_TABS = ["All", "Agents", "LLMs", "Infra", "UX", "Other"] as const;
 type CategoryTab = (typeof CATEGORY_TABS)[number];
 
+function cleanText(s: string): string {
+  return s.replace(/[—–]/g, "-").trim();
+}
+
 function parseRepo(title: string): { owner: string; repo: string; description: string } {
   const slashIdx = title.indexOf("/");
   const colonIdx = title.indexOf(": ");
@@ -29,10 +33,10 @@ function parseRepo(title: string): { owner: string; repo: string; description: s
     return {
       owner: parts[0] ?? "",
       repo: parts[1] ?? fullName,
-      description: title.slice(colonIdx + 2).replace(/—/g, ",").trim(),
+      description: cleanText(title.slice(colonIdx + 2)),
     };
   }
-  return { owner: "", repo: title.slice(0, 60), description: "" };
+  return { owner: "", repo: cleanText(title.slice(0, 60)), description: "" };
 }
 
 function starDisplay(n: number): string {
@@ -57,12 +61,11 @@ function RepoCard(props: {
   const { owner, repo, description } = parseRepo(a.title);
   const stars = a.engagementStars ?? 0;
   const isViral = VIRAL_SOURCE_NAMES.has(a.source);
+  const summary = cleanText(a.summary ?? "");
 
   return (
     <Link
-      href={a.url}
-      target="_blank"
-      rel="noopener noreferrer"
+      href={`/article/${a.id}`}
       className="group flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition hover:bg-white/[0.07] hover:border-white/10"
     >
       {/* Header */}
@@ -91,8 +94,8 @@ function RepoCard(props: {
       </div>
 
       {/* Summary */}
-      {a.summary && (
-        <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">{a.summary}</p>
+      {summary && (
+        <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">{summary}</p>
       )}
 
       {/* Footer */}
@@ -112,26 +115,56 @@ function RepoCard(props: {
 }
 
 export default async function ReposPage(props: {
-  searchParams: Promise<{ category?: string; viral?: string; days?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    viral?: string;
+    days?: string;
+    page?: string;
+    per_page?: string;
+  }>;
 }) {
   const sp = await props.searchParams;
+
   const allowedCats = ["Agents", "LLMs", "Infra", "UX", "Other"] as const;
   const category = allowedCats.find((c) => c === sp.category);
   const viralOnly = sp.viral === "1";
-  const allowedDays = [7, 30, 90];
-  const days = allowedDays.includes(Number(sp.days)) ? Number(sp.days) : 30;
   const activeCategory = (sp.category ?? "All") as CategoryTab;
 
+  // Days — Topbar sets this; treat "Today" (1) as 7 for repos.
+  const rawDays = Number(sp.days ?? "7");
+  const days = [1, 7, 30, 90].includes(rawDays) ? Math.max(rawDays, 7) : 7;
+
+  // Pagination — driven by Topbar's per_page selector.
+  const perPage = [10, 15, 20].includes(Number(sp.per_page)) ? Number(sp.per_page) : 10;
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
+
   const [allRepos, risingRepos] = await Promise.all([
-    getGitHubRepos({ category, viralOnly, days, limit: 80 }),
-    viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 12 }),
+    getGitHubRepos({ category, viralOnly, days, limit: 200 }),
+    viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 6 }),
   ]);
+
+  const totalPages = Math.max(1, Math.ceil(allRepos.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const pageRepos = allRepos.slice((safePage - 1) * perPage, safePage * perPage);
 
   function buildUrl(params: Record<string, string | undefined>) {
     const next = new URLSearchParams();
     if (params.category && params.category !== "All") next.set("category", params.category);
     if (params.viral) next.set("viral", params.viral);
-    if (params.days && params.days !== "30") next.set("days", params.days);
+    if (sp.days) next.set("days", sp.days);
+    if (sp.per_page) next.set("per_page", sp.per_page);
+    if (params.page && params.page !== "1") next.set("page", params.page);
+    const qs = next.toString();
+    return `/repos${qs ? `?${qs}` : ""}`;
+  }
+
+  function pageUrl(p: number) {
+    const next = new URLSearchParams();
+    if (sp.category && sp.category !== "All") next.set("category", sp.category);
+    if (sp.viral) next.set("viral", sp.viral);
+    if (sp.days) next.set("days", sp.days);
+    if (sp.per_page) next.set("per_page", sp.per_page);
+    if (p > 1) next.set("page", String(p));
     const qs = next.toString();
     return `/repos${qs ? `?${qs}` : ""}`;
   }
@@ -153,7 +186,7 @@ export default async function ReposPage(props: {
             AI Repos Worth <span className="text-cyan-200">Watching</span>
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
-            Every AI-relevant GitHub repo we track — agents, LLMs, tools, infra — scored for relevance and surfaced early. Updated every ingest cycle.
+            Every AI-relevant GitHub repo we track - agents, LLMs, tools, infra - scored for relevance and surfaced early. Updated every ingest cycle.
           </p>
         </section>
 
@@ -166,62 +199,44 @@ export default async function ReposPage(props: {
                 <span className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">Rising fast</span>
               </div>
               <Link
-                href={buildUrl({ viral: "1", days: "14" })}
+                href={buildUrl({ viral: "1" })}
                 className="text-[11px] text-zinc-500 hover:text-zinc-300 transition"
               >
-                View all →
+                View all
               </Link>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {risingRepos.slice(0, 6).map((r) => (
+              {risingRepos.map((r) => (
                 <RepoCard key={r.id} article={r} />
               ))}
             </div>
           </section>
         )}
 
-        {/* Filters */}
+        {/* Main grid */}
         <section>
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            {/* Category tabs */}
-            <div className="flex flex-wrap gap-1">
-              {CATEGORY_TABS.map((cat) => (
-                <Link
-                  key={cat}
-                  href={buildUrl({ category: cat, days: String(days) })}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    activeCategory === cat
-                      ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/30"
-                      : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  {cat}
-                </Link>
-              ))}
-            </div>
-
-            <div className="ml-auto flex items-center gap-2">
-              {/* Days filter */}
-              {[7, 30, 90].map((d) => (
-                <Link
-                  key={d}
-                  href={buildUrl({ category: activeCategory, days: String(d) })}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    days === d
-                      ? "bg-white/10 text-white"
-                      : "text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  {d}d
-                </Link>
-              ))}
-            </div>
+          {/* Category filter */}
+          <div className="flex flex-wrap gap-1 mb-4">
+            {CATEGORY_TABS.map((cat) => (
+              <Link
+                key={cat}
+                href={buildUrl({ category: cat })}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  activeCategory === cat
+                    ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/30"
+                    : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {cat}
+              </Link>
+            ))}
           </div>
 
           {/* Count */}
           <div className="mb-4 text-xs text-zinc-600">
             {allRepos.length} repo{allRepos.length !== 1 ? "s" : ""}
             {viralOnly ? " · viral only" : ""}
+            {totalPages > 1 && ` · page ${safePage} of ${totalPages}`}
           </div>
 
           {allRepos.length === 0 ? (
@@ -230,9 +245,70 @@ export default async function ReposPage(props: {
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {allRepos.map((r) => (
+              {pageRepos.map((r) => (
                 <RepoCard key={r.id} article={r} />
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-between gap-4">
+              <Link
+                href={pageUrl(safePage - 1)}
+                aria-disabled={safePage === 1}
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm transition-colors ${
+                  safePage === 1
+                    ? "pointer-events-none border-white/5 text-zinc-700"
+                    : "border-white/10 text-zinc-400 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M9 11L5 7L9 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Previous
+              </Link>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                  const isActive = p === safePage;
+                  const isNearby = Math.abs(p - safePage) <= 1 || p === 1 || p === totalPages;
+                  if (!isNearby) {
+                    if (p === 2 || p === totalPages - 1) {
+                      return <span key={p} className="text-xs text-zinc-700 px-1">…</span>;
+                    }
+                    return null;
+                  }
+                  return (
+                    <Link
+                      key={p}
+                      href={pageUrl(p)}
+                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                        isActive
+                          ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40"
+                          : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <Link
+                href={pageUrl(safePage + 1)}
+                aria-disabled={safePage === totalPages}
+                className={`flex items-center gap-2 rounded-xl border px-4 py-2 text-sm transition-colors ${
+                  safePage === totalPages
+                    ? "pointer-events-none border-white/5 text-zinc-700"
+                    : "border-white/10 text-zinc-400 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                Next
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
             </div>
           )}
         </section>
