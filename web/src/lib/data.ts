@@ -37,11 +37,11 @@ export type ArticleFilters = {
 };
 
 export async function getArticles(filters: ArticleFilters = {}, userId?: string) {
-  const days = filters.days && [1, 7, 30, 90].includes(filters.days) ? filters.days : 1;
+  const days = filters.days && [1, 7, 30, 90].includes(filters.days) ? filters.days : 7;
   const recencyCutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const where: Prisma.ArticleWhereInput = {
     duplicateOfId: null,
-    publishedAt: { gte: recencyCutoff },
+    createdAt: { gte: recencyCutoff },
   };
 
   if (userId) {

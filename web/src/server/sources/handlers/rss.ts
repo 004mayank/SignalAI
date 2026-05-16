@@ -48,7 +48,10 @@ export async function ingestRSS(source: SourceConfig, limit = 20): Promise<Norma
   return items
     .flatMap((item) => {
       const url = item.link;
-      const title = item.title;
+      // Some feeds (e.g. OpenAI Atom) return HTML in title or the XML sanitizer
+      // can leave ="" artifacts. Strip tags and remove those artifacts.
+      const rawTitle = item.title ?? "";
+      const title = stripHtml(rawTitle).replace(/=""/g, "").trim();
       if (!url || !title) return [];
 
       const it = item as unknown as {
