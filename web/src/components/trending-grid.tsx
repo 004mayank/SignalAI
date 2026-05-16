@@ -86,10 +86,10 @@ export function TrendingGrid(props: { articles: ArticleSummary[] }) {
               <Link
                 key={a.id}
                 href={`/article/${a.id}`}
-                className="group rounded-2xl border border-white/5 bg-white/5 p-4 hover:bg-white/10"
+                className="group overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-4 hover:bg-white/10"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
                       {a.category} • {a.sourceType}
                     </div>
