@@ -9,6 +9,18 @@ function scoreLabel(score: number) {
   return `${s.toFixed(1)}/5`;
 }
 
+function parseTitle(title: string): { primary: string; repo?: string } {
+  const colonIdx = title.indexOf(": ");
+  if (colonIdx !== -1) {
+    const before = title.slice(0, colonIdx);
+    if (before.includes("/")) {
+      const description = title.slice(colonIdx + 2).replace(/—/g, ",").trim();
+      return { primary: description || before, repo: before };
+    }
+  }
+  return { primary: title.replace(/—/g, ",") };
+}
+
 type ArticleSummary = {
   id: string;
   title: string;
@@ -68,9 +80,19 @@ export function TrendingGrid(props: { articles: ArticleSummary[] }) {
                   </div>
                 </div>
 
-                <h2 className="mt-5 text-2xl font-semibold leading-tight text-white group-hover:text-cyan-100">
-                  {featured.title}
-                </h2>
+                {(() => {
+                  const { primary, repo } = parseTitle(featured.title);
+                  return (
+                    <>
+                      <h2 className="mt-5 text-2xl font-semibold leading-tight text-white group-hover:text-cyan-100">
+                        {primary}
+                      </h2>
+                      {repo ? (
+                        <p className="mt-1.5 text-sm text-zinc-500">{repo}</p>
+                      ) : null}
+                    </>
+                  );
+                })()}
                 <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-300">
                   {featured.summary}
                 </p>
@@ -88,19 +110,27 @@ export function TrendingGrid(props: { articles: ArticleSummary[] }) {
                 href={`/article/${a.id}`}
                 className="group overflow-hidden rounded-2xl border border-white/5 bg-white/5 p-4 hover:bg-white/10"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-                      {a.category} • {a.sourceType}
+                {(() => {
+                  const { primary, repo } = parseTitle(a.title);
+                  return (
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                          {a.category} • {a.sourceType}
+                        </div>
+                        <div className="mt-2 line-clamp-2 text-sm font-semibold text-white">
+                          {primary}
+                        </div>
+                        {repo ? (
+                          <div className="mt-1 line-clamp-1 text-[11px] text-zinc-600">{repo}</div>
+                        ) : null}
+                      </div>
+                      <div className="shrink-0 rounded-lg bg-black/40 px-2 py-1 text-xs text-cyan-200 ring-1 ring-white/10">
+                        {scoreLabel(a.finalScore)}
+                      </div>
                     </div>
-                    <div className="mt-2 line-clamp-2 text-sm font-semibold text-white">
-                      {a.title}
-                    </div>
-                  </div>
-                  <div className="shrink-0 rounded-lg bg-black/40 px-2 py-1 text-xs text-cyan-200 ring-1 ring-white/10">
-                    {scoreLabel(a.finalScore)}
-                  </div>
-                </div>
+                  );
+                })()}
                 <div className="mt-3 line-clamp-2 text-xs leading-relaxed text-zinc-400">
                   {a.summary}
                 </div>
