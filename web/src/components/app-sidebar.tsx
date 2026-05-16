@@ -5,6 +5,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { NewsletterSubscribe } from "@/components/newsletter-subscribe";
 
 const categories = ["All", "Agents", "LLMs", "Infra", "UX", "Other"] as const;
+const layers = ["", "research", "labs", "builder", "community", "startup", "distribution"] as const;
+const sourceTypes = ["", "rss", "arxiv", "github", "huggingface", "reddit", "hn", "producthunt"] as const;
+const LAYER_LABELS: Record<string, string> = {
+  "": "All", research: "Research", labs: "Labs", builder: "Builder", community: "Community", startup: "Startup", distribution: "Distribution",
+};
+const SOURCE_TYPE_LABELS: Record<string, string> = {
+  "": "All", rss: "Blog / RSS", arxiv: "arXiv", github: "GitHub", huggingface: "HuggingFace", reddit: "Reddit", hn: "Hacker News", producthunt: "Product Hunt",
+};
 
 type Props = {
   showFilters?: boolean;
@@ -16,6 +24,8 @@ export function AppSidebar({ showFilters = true }: Props) {
   const sp = useSearchParams();
 
   const activeCategory = sp.get("category") ?? "All";
+  const activeLayer = sp.get("layer") ?? "";
+  const activeSourceType = sp.get("source_type") ?? "";
   const min = Number(sp.get("min") ?? "1");
 
   function setParam(key: string, value: string) {
@@ -83,6 +93,32 @@ export function AppSidebar({ showFilters = true }: Props) {
           </div>
 
           <div className="mt-6">
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">Layer</div>
+            <select
+              value={activeLayer}
+              onChange={(e) => setParam("layer", e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-300"
+            >
+              {layers.map((l) => (
+                <option key={l} value={l} className="bg-[#07090d]">{LAYER_LABELS[l]}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-2">Source type</div>
+            <select
+              value={activeSourceType}
+              onChange={(e) => setParam("source_type", e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-300"
+            >
+              {sourceTypes.map((t) => (
+                <option key={t} value={t} className="bg-[#07090d]">{SOURCE_TYPE_LABELS[t]}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4">
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Min relevance

@@ -19,7 +19,7 @@ export function SidebarFilters() {
     const next = new URLSearchParams(sp.toString());
     if (value === "" || value === "All") next.delete(key);
     else next.set(key, value);
-    router.push(`/?${next.toString()}`);
+    router.push(`/feed?${next.toString()}`);
   }
 
   return (
@@ -36,8 +36,8 @@ export function SidebarFilters() {
               className={
                 "w-full rounded-lg px-3 py-2 text-left text-sm transition " +
                 (category === c
-                  ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                  : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-900")
+                  ? "bg-white/10 text-white ring-1 ring-white/10"
+                  : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200")
               }
             >
               {c}
@@ -51,7 +51,7 @@ export function SidebarFilters() {
         <select
           value={layer}
           onChange={(e) => setParam("layer", e.target.value)}
-          className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-950"
+          className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-300"
         >
           {layers.map((l) => (
             <option key={l} value={l}>
@@ -66,7 +66,7 @@ export function SidebarFilters() {
         <select
           value={sourceType}
           onChange={(e) => setParam("source_type", e.target.value)}
-          className="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-950"
+          className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-zinc-300"
         >
           {sourceTypes.map((t) => (
             <option key={t} value={t}>
@@ -89,11 +89,11 @@ export function SidebarFilters() {
             onChange={(e) => setParam("min", e.target.value)}
             className="w-full"
           />
-          <div className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{min}+</div>
+          <div className="mt-1 text-sm text-zinc-400">{min}+</div>
         </div>
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+      <div className="rounded-lg border border-white/5 bg-white/5 p-3 text-sm text-zinc-500">
         Tip: run <code className="font-mono">POST /api/seed</code> to load sample data, or <code className="font-mono">POST /api/ingest</code> to pull RSS.
       </div>
     </aside>

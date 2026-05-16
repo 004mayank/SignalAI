@@ -25,7 +25,7 @@ export default async function FeedPage(props: {
   const layer = allowedLayers.find((l) => l === sp.layer);
 
   const allowedDays = [1, 7, 30, 90] as const;
-  const days = allowedDays.find((d) => d === Number(sp.days)) ?? 7;
+  const days = allowedDays.find((d) => d === Number(sp.days)) ?? 1;
   const search = sp.search?.trim() || undefined;
 
   const [articles, insight] = await Promise.all([
@@ -36,6 +36,9 @@ export default async function FeedPage(props: {
   const trendingArticles = [...articles]
     .sort((a, b) => (b.finalScore ?? 0) - (a.finalScore ?? 0))
     .slice(0, 5);
+  const trendingIds = new Set(trendingArticles.map((a) => a.id));
+  const insightId = insight?.id;
+  const feedArticles = articles.filter((a) => !trendingIds.has(a.id) && a.id !== insightId);
 
   return (
     <Shell sidebarFilters={true}>
@@ -68,7 +71,7 @@ export default async function FeedPage(props: {
                 No articles yet. Ingest RSS via <code className="font-mono">POST /api/ingest</code>.
               </div>
             ) : (
-              articles.slice(0, 10).map((a) => <ArticleCard key={a.id} article={a} />)
+              feedArticles.map((a) => <ArticleCard key={a.id} article={a} />)
             )}
           </div>
         </section>
