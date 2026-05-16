@@ -10,6 +10,8 @@ const DAYS_OPTIONS = [
   { label: "90d", value: 90 },
 ] as const;
 
+const PER_PAGE_OPTIONS = [10, 15, 20] as const;
+
 export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -18,6 +20,7 @@ export function Topbar() {
 
   const currentDays = Number(searchParams.get("days") ?? "1") || 1;
   const currentSearch = searchParams.get("search") ?? "";
+  const currentPerPage = Number(searchParams.get("per_page") ?? "10") || 10;
 
   const pushParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -43,7 +46,11 @@ export function Topbar() {
   }
 
   function handleDaySelect(days: number) {
-    pushParams({ days: days === 1 ? null : String(days) });
+    pushParams({ days: days === 1 ? null : String(days), page: null });
+  }
+
+  function handlePerPageChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    pushParams({ per_page: e.target.value === "10" ? null : e.target.value, page: null });
   }
 
   return (
@@ -70,24 +77,40 @@ export function Topbar() {
         </div>
       </div>
 
-      {/* Timeline filter */}
-      <div className="flex items-center gap-2">
-        {DAYS_OPTIONS.map(({ label, value }) => {
-          const active = currentDays === value;
-          return (
-            <button
-              key={value}
-              onClick={() => handleDaySelect(value)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                active
-                  ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
+      {/* Timeline + per-page filters */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          {DAYS_OPTIONS.map(({ label, value }) => {
+            const active = currentDays === value;
+            return (
+              <button
+                key={value}
+                onClick={() => handleDaySelect(value)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
+          <span>Show</span>
+          <select
+            value={currentPerPage}
+            onChange={handlePerPageChange}
+            className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-zinc-300"
+          >
+            {PER_PAGE_OPTIONS.map((n) => (
+              <option key={n} value={n} className="bg-[#07090d]">{n}</option>
+            ))}
+          </select>
+          <span>per page</span>
+        </div>
       </div>
     </div>
   );
