@@ -8,6 +8,7 @@ const EnvSchema = z.object({
   BEEHIIV_PUBLICATION_ID: z.string().min(1).optional(),
   // Comma-separated RSS feed URLs (optional). If omitted, the app can run with seed data.
   RSS_FEEDS: z.string().optional(),
+  GITHUB_TOKEN: z.string().optional(),
 });
 
 type Env = z.infer<typeof EnvSchema>;
@@ -23,6 +24,7 @@ export function getEnv(): Env {
     BEEHIIV_API_KEY: process.env.BEEHIIV_API_KEY,
     BEEHIIV_PUBLICATION_ID: process.env.BEEHIIV_PUBLICATION_ID,
     RSS_FEEDS: process.env.RSS_FEEDS,
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
   });
   return cached;
 }

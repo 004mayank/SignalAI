@@ -78,12 +78,48 @@ export const SOURCES: SourceConfig[] = [
     layer: "distribution",
   },
 
-  // Builder signals
+  // Builder signals — GitHub
+  // Sorted by "updated" so we catch active projects, not just all-time top stars.
   {
-    name: "GitHub AI Trending",
+    name: "GitHub AI Agents",
     type: "github",
-    url: "https://api.github.com/search/repositories?q=ai&sort=stars&order=desc",
+    url: "https://api.github.com/search/repositories?q=topic:ai-agents+topic:llm&sort=updated&order=desc",
     weight: 5,
+    layer: "builder",
+  },
+  {
+    name: "GitHub MCP Servers",
+    type: "github",
+    url: "https://api.github.com/search/repositories?q=topic:mcp-server+OR+topic:model-context-protocol&sort=updated&order=desc",
+    weight: 5,
+    layer: "builder",
+  },
+  {
+    name: "GitHub Autonomous Agents",
+    type: "github",
+    url: "https://api.github.com/search/repositories?q=topic:autonomous-agents+OR+topic:ai-agent&sort=updated&order=desc",
+    weight: 5,
+    layer: "builder",
+  },
+  {
+    name: "GitHub LLM Tools",
+    type: "github",
+    url: "https://api.github.com/search/repositories?q=topic:llm-tools+OR+topic:llm-framework&sort=updated&order=desc",
+    weight: 4,
+    layer: "builder",
+  },
+  {
+    name: "GitHub Claude Tools",
+    type: "github",
+    url: "https://api.github.com/search/repositories?q=claude+agent+OR+claude+mcp+OR+claude-code&sort=updated&order=desc&per_page=30",
+    weight: 5,
+    layer: "builder",
+  },
+  {
+    name: "GitHub AI Workflows",
+    type: "github",
+    url: "https://api.github.com/search/repositories?q=topic:github-actions+topic:ai+OR+topic:llm&sort=updated&order=desc",
+    weight: 4,
     layer: "builder",
   },
   {
