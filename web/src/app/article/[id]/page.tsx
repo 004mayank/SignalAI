@@ -15,7 +15,21 @@ function scoreLabel(score: number) {
 
 // LLMs occasionally emit em-dashes despite instructions. Strip them at render time.
 function clean(text: string): string {
-  return text.replace(/—/g, ", ").replace(/\s{2,}/g, " ").trim();
+  return text.replace(/[—–]/g, "-").replace(/\s{2,}/g, " ").trim();
+}
+
+// For GitHub repos the title is "owner/repo: description".
+// Return description as the primary heading and owner/repo as subtitle.
+function parseTitle(title: string): { primary: string; repo?: string } {
+  const colonIdx = title.indexOf(": ");
+  if (colonIdx !== -1) {
+    const before = title.slice(0, colonIdx);
+    if (before.includes("/")) {
+      const description = clean(title.slice(colonIdx + 2));
+      return { primary: description || before, repo: before };
+    }
+  }
+  return { primary: clean(title) };
 }
 
 function categoryColor(category: string) {
@@ -107,9 +121,19 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Title */}
-          <h1 className="mt-5 max-w-5xl text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl">
-            {article.title}
-          </h1>
+          {(() => {
+            const { primary, repo } = parseTitle(article.title);
+            return (
+              <>
+                <h1 className="mt-5 max-w-5xl text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl">
+                  {primary}
+                </h1>
+                {repo && (
+                  <p className="mt-2 text-base text-zinc-500 font-mono">{repo}</p>
+                )}
+              </>
+            );
+          })()}
 
           {/* Key quote */}
           <blockquote className="mt-6 max-w-3xl border-l-2 border-cyan-400/50 pl-5 text-lg leading-relaxed text-zinc-300 italic">
