@@ -114,6 +114,13 @@ function RepoCard(props: {
   );
 }
 
+const MIN_STARS_OPTIONS = [
+  { label: "Any", value: 0 },
+  { label: "100+", value: 100 },
+  { label: "1k+", value: 1000 },
+  { label: "10k+", value: 10000 },
+] as const;
+
 export default async function ReposPage(props: {
   searchParams: Promise<{
     category?: string;
@@ -121,6 +128,7 @@ export default async function ReposPage(props: {
     days?: string;
     page?: string;
     per_page?: string;
+    min_stars?: string;
   }>;
 }) {
   const sp = await props.searchParams;
@@ -134,12 +142,16 @@ export default async function ReposPage(props: {
   const rawDays = Number(sp.days ?? "7");
   const days = [1, 7, 30, 90].includes(rawDays) ? Math.max(rawDays, 7) : 7;
 
+  // Min stars filter.
+  const allowedMinStars = [0, 100, 1000, 10000];
+  const minStars = allowedMinStars.includes(Number(sp.min_stars)) ? Number(sp.min_stars) : 0;
+
   // Pagination — driven by Topbar's per_page selector.
   const perPage = [10, 15, 20].includes(Number(sp.per_page)) ? Number(sp.per_page) : 10;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const [allRepos, risingRepos] = await Promise.all([
-    getGitHubRepos({ category, viralOnly, days, limit: 200 }),
+    getGitHubRepos({ category, viralOnly, days, limit: 200, minStars: minStars || undefined }),
     viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 6 }),
   ]);
 
@@ -153,6 +165,7 @@ export default async function ReposPage(props: {
     if (params.viral) next.set("viral", params.viral);
     if (sp.days) next.set("days", sp.days);
     if (sp.per_page) next.set("per_page", sp.per_page);
+    if (sp.min_stars && sp.min_stars !== "0") next.set("min_stars", sp.min_stars);
     if (params.page && params.page !== "1") next.set("page", params.page);
     const qs = next.toString();
     return `/repos${qs ? `?${qs}` : ""}`;
@@ -164,7 +177,19 @@ export default async function ReposPage(props: {
     if (sp.viral) next.set("viral", sp.viral);
     if (sp.days) next.set("days", sp.days);
     if (sp.per_page) next.set("per_page", sp.per_page);
+    if (sp.min_stars && sp.min_stars !== "0") next.set("min_stars", sp.min_stars);
     if (p > 1) next.set("page", String(p));
+    const qs = next.toString();
+    return `/repos${qs ? `?${qs}` : ""}`;
+  }
+
+  function starsUrl(val: number) {
+    const next = new URLSearchParams();
+    if (sp.category && sp.category !== "All") next.set("category", sp.category);
+    if (sp.viral) next.set("viral", sp.viral);
+    if (sp.days) next.set("days", sp.days);
+    if (sp.per_page) next.set("per_page", sp.per_page);
+    if (val > 0) next.set("min_stars", String(val));
     const qs = next.toString();
     return `/repos${qs ? `?${qs}` : ""}`;
   }
@@ -215,21 +240,42 @@ export default async function ReposPage(props: {
 
         {/* Main grid */}
         <section>
-          {/* Category filter */}
-          <div className="flex flex-wrap gap-1 mb-4">
-            {CATEGORY_TABS.map((cat) => (
-              <Link
-                key={cat}
-                href={buildUrl({ category: cat })}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                  activeCategory === cat
-                    ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/30"
-                    : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {cat}
-              </Link>
-            ))}
+          {/* Filters row */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            {/* Category filter */}
+            <div className="flex flex-wrap gap-1">
+              {CATEGORY_TABS.map((cat) => (
+                <Link
+                  key={cat}
+                  href={buildUrl({ category: cat })}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    activeCategory === cat
+                      ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/30"
+                      : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {cat}
+                </Link>
+              ))}
+            </div>
+
+            {/* Min stars filter */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-zinc-500 mr-1">Min stars</span>
+              {MIN_STARS_OPTIONS.map(({ label, value }) => (
+                <Link
+                  key={value}
+                  href={starsUrl(value)}
+                  className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                    minStars === value
+                      ? "bg-yellow-400/15 text-yellow-200 ring-1 ring-yellow-400/30"
+                      : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Count */}

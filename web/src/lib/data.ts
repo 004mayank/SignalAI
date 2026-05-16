@@ -117,6 +117,7 @@ export type GitHubRepoFilters = {
   viralOnly?: boolean;
   days?: number;
   limit?: number;
+  minStars?: number;
 };
 
 export async function getGitHubRepos(filters: GitHubRepoFilters = {}) {
@@ -132,6 +133,7 @@ export async function getGitHubRepos(filters: GitHubRepoFilters = {}) {
 
   if (filters.category) where.category = filters.category;
   if (filters.viralOnly) where.source = { in: Array.from(VIRAL_SOURCE_NAMES) };
+  if (filters.minStars) where.engagementStars = { gte: filters.minStars };
 
   const repos = await prisma.article.findMany({
     where,
