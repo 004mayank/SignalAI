@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { runIngestion } from "@/server/services/ingest";
 
+// Vercel Pro max function duration (seconds). Cron jobs need this to avoid
+// the default 10s timeout when processing 50+ sources sequentially.
+export const maxDuration = 300;
+
 // Called by Vercel Cron every 6 hours (see vercel.json).
 // Guard with CRON_SECRET to prevent unauthorized triggers.
 export async function GET(req: Request) {
@@ -17,6 +21,7 @@ export async function GET(req: Request) {
     }
   }
 
-  const result = await runIngestion();
+  // Limit items per source to 10 for cron runs to stay within 300s budget.
+  const result = await runIngestion({ limitPerSource: 10 });
   return NextResponse.json({ data: result });
 }
