@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import { runIngestion } from "@/server/services/ingest";
 
-// Vercel Pro max function duration (seconds). Cron jobs need this to avoid
-// the default 10s timeout when processing 50+ sources sequentially.
+// Allow up to 300s for the background processing task.
 export const maxDuration = 300;
 
 // Called by Vercel Cron every 6 hours (see vercel.json).
 // Guard with CRON_SECRET to prevent unauthorized triggers.
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
-  // In production, CRON_SECRET must be set — reject requests without it.
-  // Vercel automatically sends Authorization: Bearer <CRON_SECRET> on its cron calls.
   if (!secret && process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 });
   }
@@ -21,7 +19,19 @@ export async function GET(req: Request) {
     }
   }
 
-  // Limit items per source to 10 for cron runs to stay within 300s budget.
-  const result = await runIngestion({ limitPerSource: 10 });
-  return NextResponse.json({ data: result });
+  // Return 200 immediately so Vercel cron marks the job as successful.
+  // The actual ingestion runs in the background via after(), staying alive
+  // up to maxDuration seconds. A 55s wall-clock cutoff inside the ingest
+  // ensures it exits gracefully before the function is forcibly killed.
+  const deadline = Date.now() + 55_000;
+  after(async () => {
+    try {
+      const result = await runIngestion({ limitPerSource: 5, deadlineMs: deadline });
+      console.log("[cron/ingest] completed", result);
+    } catch (err) {
+      console.error("[cron/ingest] error", err);
+    }
+  });
+
+  return NextResponse.json({ status: "started" });
 }

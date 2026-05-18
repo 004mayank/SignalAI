@@ -96,11 +96,10 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> 
 }
 
 export async function runIngestion(params?: {
-  // Backward compatible: RSS feeds list
   feeds?: string[];
-  // New: restrict to certain registry source names
   sourceNames?: string[];
   limitPerSource?: number;
+  deadlineMs?: number;
 }) {
   if (ingestionRunning) {
     console.warn("[ingest] Skipping run — previous ingestion still in progress.");
@@ -109,183 +108,20 @@ export async function runIngestion(params?: {
   ingestionRunning = true;
 
   try {
-  return await _runIngestion(params);
+    return await _runIngestion(params);
   } finally {
     ingestionRunning = false;
   }
-}
-
-type SourceResult = {
-  fetched: number;
-  created: number;
-  skipped: number;
-  errors: { source: string; error: string }[];
-  clusterIds: string[];
-};
-
-// Process a single source end-to-end (fetch → filter → LLM → embed → persist).
-// Designed to run concurrently with other sources — no shared mutable state.
-async function processOneSource(source: SourceConfig, limit: number): Promise<SourceResult> {
-  const result: SourceResult = { fetched: 0, created: 0, skipped: 0, errors: [], clusterIds: [] };
-  const runAt = new Date();
-
-  try {
-    const normalized = await fetchWithRetry(() => ingestSource(source, limit));
-    result.fetched = normalized.length;
-
-    // ── Phase A: cheap filters + LLM gate ──────────────────────────────
-    const phaseA: PhaseAItem[] = [];
-    const batchUrls = new Set<string>();
-
-    for (const item of normalized) {
-      const url = item.url;
-      const title = item.title;
-      const content = item.content;
-
-      if (!url || !title || !content) {
-        result.skipped++;
-        continue;
-      }
-
-      if (isObviousNoise(title, source.type)) {
-        console.debug("[ingest] skip: noise filter", { title, source: source.name });
-        result.skipped++;
-        continue;
-      }
-
-      if (batchUrls.has(url)) {
-        result.skipped++;
-        continue;
-      }
-      batchUrls.add(url);
-
-      const exists = await prisma.article.findUnique({ where: { url } });
-      if (exists) {
-        console.debug("[ingest] skip: url already ingested", { url, source: source.name });
-        result.skipped++;
-        continue;
-      }
-
-      let ai: ArticleAIResult;
-      try {
-        ai = await analyzeArticleWithLLM({ title, source: item.source, url, content });
-      } catch (err) {
-        console.warn("[ingest] LLM analysis failed, skipping article", { title, error: String(err) });
-        result.skipped++;
-        continue;
-      }
-
-      if (!ai.is_ai_relevant || ai.relevance_score < minLlmScore(source.type)) {
-        console.debug("[ingest] skip: llm rejected", { title, score: ai.relevance_score });
-        result.skipped++;
-        continue;
-      }
-
-      phaseA.push({ item, ai, url, title, content });
-    }
-
-    // ── Phase B: batch embed all survivors ──────────────────────────────
-    if (phaseA.length > 0) {
-      const embeddings = await embedTexts(
-        phaseA.map(({ title, content }) => `${title.slice(0, 200)}\n\n${content.slice(0, 7800)}`),
-      );
-
-      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
-      const recent = await prisma.article.findMany({
-        where: { createdAt: { gte: twoDaysAgo } },
-        orderBy: { createdAt: "desc" },
-        select: { id: true, embedding: true },
-      });
-
-      // ── Phase C: dedup + score + persist ───────────────────────────────
-      for (let i = 0; i < phaseA.length; i++) {
-        const { item, ai, url, title, content } = phaseA[i];
-        const embedding = embeddings[i];
-
-        const dup = recent
-          .map((r) => ({ id: r.id, sim: cosineSimilarity(embedding, r.embedding) }))
-          .sort((a, b) => b.sim - a.sim)[0];
-
-        const engScore = engagementScore({
-          stars: item.engagement.stars,
-          upvotes: item.engagement.upvotes,
-          comments: item.engagement.comments,
-        });
-
-        const finalScore = finalRelevanceScore({
-          llmScore: ai.relevance_score,
-          sourceWeight: source.weight,
-          engagementScore: engScore,
-        });
-
-        if (finalScore < MIN_FINAL_SCORE) {
-          console.debug("[ingest] skip: final score below threshold", { title, finalScore });
-          result.skipped++;
-          continue;
-        }
-
-        if (dup && dup.sim >= 0.82) {
-          console.debug("[ingest] skip: semantic duplicate", { title, sim: dup.sim.toFixed(3) });
-          await prisma.article.create({
-            data: {
-              title, url,
-              source: item.source, sourceType: item.source_type, layer: item.layer,
-              engagementStars: item.engagement.stars, engagementUpvotes: item.engagement.upvotes, engagementComments: item.engagement.comments,
-              content, summary: ai.tldr, whatHappened: ai.what_happened, whyItMatters: ai.why_it_matters,
-              useCase: ai.use_case, actionableTakeaway: ai.actionable_takeaway,
-              impactLevel: ai.impact_level, targetPersona: ai.target_persona, category: ai.category,
-              llmScore: ai.relevance_score, finalScore, embedding, duplicateOfId: dup.id, publishedAt: item.created_at,
-            },
-          });
-          result.skipped++;
-          continue;
-        }
-
-        const { clusterId } = await assignCluster({ category: ai.category, embedding, threshold: 0.8 });
-
-        await prisma.article.create({
-          data: {
-            title, url,
-            source: item.source, sourceType: item.source_type, layer: item.layer,
-            engagementStars: item.engagement.stars, engagementUpvotes: item.engagement.upvotes, engagementComments: item.engagement.comments,
-            content, summary: ai.tldr, whatHappened: ai.what_happened, whyItMatters: ai.why_it_matters,
-            useCase: ai.use_case, actionableTakeaway: ai.actionable_takeaway,
-            impactLevel: ai.impact_level, targetPersona: ai.target_persona, category: ai.category,
-            llmScore: ai.relevance_score, finalScore, embedding, clusterId, publishedAt: item.created_at,
-          },
-        });
-
-        await updateClusterCentroid(clusterId);
-        await upsertTrendForCluster({ clusterId, category: ai.category });
-        result.clusterIds.push(clusterId);
-        result.created++;
-      }
-    }
-
-    await prisma.sourceHealth.upsert({
-      where: { sourceName: source.name },
-      create: { sourceName: source.name, lastRunAt: runAt, lastSuccessAt: runAt, errorCount: 0 },
-      update: { lastRunAt: runAt, lastSuccessAt: runAt, errorCount: 0, lastError: null },
-    });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    result.errors.push({ source: source.name, error: msg });
-    await prisma.sourceHealth.upsert({
-      where: { sourceName: source.name },
-      create: { sourceName: source.name, lastRunAt: runAt, errorCount: 1, lastError: msg },
-      update: { lastRunAt: runAt, errorCount: { increment: 1 }, lastError: msg },
-    }).catch(() => {});
-  }
-
-  return result;
 }
 
 async function _runIngestion(params?: {
   feeds?: string[];
   sourceNames?: string[];
   limitPerSource?: number;
+  deadlineMs?: number; // wall-clock cutoff — stop before Vercel kills the function
 }) {
   const limit = params?.limitPerSource ?? 15;
+  const deadline = params?.deadlineMs ?? Date.now() + 250_000; // 250s default
 
   const sources: SourceConfig[] = params?.feeds?.length
     ? params.feeds.map((url) => ({
@@ -303,25 +139,218 @@ async function _runIngestion(params?: {
   let created = 0;
   let skipped = 0;
   const errors: { source: string; error: string }[] = [];
+
   const affectedClusterIds = new Set<string>();
 
-  // Process sources in parallel batches of 8.
-  // HTTP fetches + LLM calls run concurrently; DB ops serialize naturally
-  // behind connection_limit=1 without deadlocking.
-  const BATCH_SIZE = 8;
-  for (let i = 0; i < sources.length; i += BATCH_SIZE) {
-    const batch = sources.slice(i, i + BATCH_SIZE);
-    const results = await Promise.allSettled(batch.map((s) => processOneSource(s, limit)));
-    for (const r of results) {
-      if (r.status === "fulfilled") {
-        fetched += r.value.fetched;
-        created += r.value.created;
-        skipped += r.value.skipped;
-        errors.push(...r.value.errors);
-        r.value.clusterIds.forEach((id) => affectedClusterIds.add(id));
-      } else {
-        errors.push({ source: "unknown", error: String(r.reason) });
+  for (const source of sources) {
+    if (Date.now() > deadline) {
+      console.warn("[ingest] wall-clock deadline reached, stopping early");
+      break;
+    }
+
+    const runAt = new Date();
+    try {
+      const normalized = await fetchWithRetry(() => ingestSource(source, limit));
+      fetched += normalized.length;
+
+      // ── Phase A: cheap filters + LLM gate ──────────────────────────────
+      // Collect items that pass all pre-embedding gates. We batch-embed them
+      // all at once in Phase B instead of one API call per article.
+      const phaseA: PhaseAItem[] = [];
+      // Dedup URLs within the current batch (catches reposts in the same feed).
+      const batchUrls = new Set<string>();
+
+      for (const item of normalized) {
+        const url = item.url;
+        const title = item.title;
+        const content = item.content;
+
+        if (!url || !title || !content) {
+          console.debug("[ingest] skip: missing url/title/content", { source: source.name });
+          skipped++;
+          continue;
+        }
+
+        // Gate 1 — cheap title pre-filter (no API call needed)
+        if (isObviousNoise(title, source.type)) {
+          console.debug("[ingest] skip: noise filter", { title, source: source.name });
+          skipped++;
+          continue;
+        }
+
+        // Batch-level URL dedup — prevents unique-constraint violations if a
+        // feed returns the same URL twice in one response.
+        if (batchUrls.has(url)) {
+          console.debug("[ingest] skip: duplicate url in batch", { url, source: source.name });
+          skipped++;
+          continue;
+        }
+        batchUrls.add(url);
+
+        const exists = await prisma.article.findUnique({ where: { url } });
+        if (exists) {
+          console.debug("[ingest] skip: url already ingested", { url, source: source.name });
+          skipped++;
+          continue;
+        }
+
+        let ai: ArticleAIResult;
+        try {
+          ai = await analyzeArticleWithLLM({ title, source: item.source, url, content });
+        } catch (err) {
+          // LLM transient failure — skip this article, don't fail the whole source.
+          console.warn("[ingest] LLM analysis failed, skipping article", { title, error: String(err) });
+          skipped++;
+          continue;
+        }
+
+        // Gate 2 — LLM relevance flag + per-source score floor
+        if (!ai.is_ai_relevant || ai.relevance_score < minLlmScore(source.type)) {
+          console.debug("[ingest] skip: llm rejected", { title, is_ai_relevant: ai.is_ai_relevant, score: ai.relevance_score, minScore: minLlmScore(source.type) });
+          skipped++;
+          continue;
+        }
+
+        phaseA.push({ item, ai, url, title, content });
       }
+
+      // ── Phase B: batch embed all survivors in one API call ──────────────
+      // Fetch recent articles once per source (not per article) for dedup.
+      if (phaseA.length > 0) {
+        // Truncate title + content separately before joining so both contribute
+        // to the embedding rather than long content silently eating the title.
+        const embeddings = await embedTexts(
+          phaseA.map(({ title, content }) => `${title.slice(0, 200)}\n\n${content.slice(0, 7800)}`),
+        );
+
+        // Narrow dedup window to 48 hours — older articles shouldn't block new
+        // coverage of a topic, and this cuts the comparison set dramatically.
+        const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+        const recent = await prisma.article.findMany({
+          where: { createdAt: { gte: twoDaysAgo } },
+          orderBy: { createdAt: "desc" },
+          select: { id: true, embedding: true },
+        });
+
+        // ── Phase C: dedup + score + persist ─────────────────────────────
+        for (let i = 0; i < phaseA.length; i++) {
+          const { item, ai, url, title, content } = phaseA[i];
+          const embedding = embeddings[i];
+
+          const dup = recent
+            .map((r) => ({ id: r.id, sim: cosineSimilarity(embedding, r.embedding) }))
+            .sort((a, b) => b.sim - a.sim)[0];
+
+          const engScore = engagementScore({
+            stars: item.engagement.stars,
+            upvotes: item.engagement.upvotes,
+            comments: item.engagement.comments,
+          });
+
+          const finalScore = finalRelevanceScore({
+            llmScore: ai.relevance_score,
+            sourceWeight: source.weight,
+            engagementScore: engScore,
+          });
+
+          // Gate 3 — final score floor (post-engagement weighting)
+          if (finalScore < MIN_FINAL_SCORE) {
+            console.debug("[ingest] skip: final score below threshold", { title, finalScore, MIN_FINAL_SCORE });
+            skipped++;
+            continue;
+          }
+
+          // If duplicate: store it but mark duplicateOfId, no clustering.
+          // Threshold 0.82 catches same-story articles from different sources.
+          if (dup && dup.sim >= 0.82) {
+            console.debug("[ingest] skip: semantic duplicate", { title, dupId: dup.id, sim: dup.sim.toFixed(3) });
+            await prisma.article.create({
+              data: {
+                title,
+                url,
+                source: item.source,
+                sourceType: item.source_type,
+                layer: item.layer,
+                engagementStars: item.engagement.stars,
+                engagementUpvotes: item.engagement.upvotes,
+                engagementComments: item.engagement.comments,
+                content,
+                summary: ai.tldr,
+                whatHappened: ai.what_happened,
+                whyItMatters: ai.why_it_matters,
+                useCase: ai.use_case,
+                actionableTakeaway: ai.actionable_takeaway,
+                impactLevel: ai.impact_level,
+                targetPersona: ai.target_persona,
+                category: ai.category,
+                llmScore: ai.relevance_score,
+                finalScore,
+                embedding,
+                duplicateOfId: dup.id,
+                publishedAt: item.created_at,
+              },
+            });
+            skipped++;
+            continue;
+          }
+
+          const { clusterId } = await assignCluster({ category: ai.category, embedding, threshold: 0.8 });
+
+          await prisma.article.create({
+            data: {
+              title,
+              url,
+              source: item.source,
+              sourceType: item.source_type,
+              layer: item.layer,
+              engagementStars: item.engagement.stars,
+              engagementUpvotes: item.engagement.upvotes,
+              engagementComments: item.engagement.comments,
+              content,
+              summary: ai.tldr,
+              whatHappened: ai.what_happened,
+              whyItMatters: ai.why_it_matters,
+              useCase: ai.use_case,
+              actionableTakeaway: ai.actionable_takeaway,
+              impactLevel: ai.impact_level,
+              targetPersona: ai.target_persona,
+              category: ai.category,
+              llmScore: ai.relevance_score,
+              finalScore,
+              embedding,
+              clusterId,
+              publishedAt: item.created_at,
+            },
+          });
+
+          await updateClusterCentroid(clusterId);
+          await upsertTrendForCluster({ clusterId, category: ai.category });
+          affectedClusterIds.add(clusterId);
+
+          created++;
+        }
+      }
+
+      // Record successful source health
+      await prisma.sourceHealth.upsert({
+        where: { sourceName: source.name },
+        create: { sourceName: source.name, lastRunAt: runAt, lastSuccessAt: runAt, errorCount: 0 },
+        update: { lastRunAt: runAt, lastSuccessAt: runAt, errorCount: 0, lastError: null },
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      errors.push({ source: source.name, error: msg });
+
+      // Record failed source health
+      await prisma.sourceHealth.upsert({
+        where: { sourceName: source.name },
+        create: { sourceName: source.name, lastRunAt: runAt, errorCount: 1, lastError: msg },
+        update: {
+          lastRunAt: runAt,
+          errorCount: { increment: 1 },
+          lastError: msg,
+        },
+      }).catch(() => {}); // don't let health tracking crash the loop
     }
   }
 
