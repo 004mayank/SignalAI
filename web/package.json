@@ -15,6 +15,7 @@
     "worker:ingest": "tsx scripts/cron.ts"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.6",
     "@prisma/client": "^6.15.0",
     "@tailwindcss/typography": "^0.5.19",
     "cheerio": "^1.2.0",
