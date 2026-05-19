@@ -151,7 +151,7 @@ export default async function ReposPage(props: {
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const [allRepos, risingRepos] = await Promise.all([
-    getGitHubRepos({ category, viralOnly, days, limit: 200, minStars: minStars || undefined }),
+    getGitHubRepos({ category, viralOnly, days, limit: 500, minStars: minStars || undefined }),
     viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 6 }),
   ]);
 
