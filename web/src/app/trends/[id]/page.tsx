@@ -63,7 +63,7 @@ function LineChart({ stats }: { stats: { date: Date; articleCount: number }[] })
           {/* Date label below chart */}
           {showLabel(i) && (
             <text x={p.x} y={H - 4} textAnchor="middle" fontSize={7} className="fill-zinc-500">
-              {new Date(p.s.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
+              {new Date(p.s.date).toLocaleDateString("en-US", { month: "short", year: "2-digit" })}
             </text>
           )}
         </g>
