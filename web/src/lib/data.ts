@@ -99,6 +99,25 @@ export async function getTrendsPage(limit = 50) {
   });
 }
 
+export async function getTrendDetail(id: string) {
+  const trend = await prisma.trend.findUnique({
+    where: { id },
+    include: {
+      stats: { orderBy: { date: "asc" }, take: 14 },
+    },
+  });
+  if (!trend) return null;
+
+  const articles = await prisma.article.findMany({
+    where: { clusterId: trend.clusterId, duplicateOfId: null },
+    orderBy: [{ finalScore: "desc" }, { publishedAt: "desc" }],
+    take: 20,
+    select: ARTICLE_SELECT,
+  });
+
+  return { trend, articles };
+}
+
 // Viral source names — repos surfaced by flash/trend detection queries.
 const VIRAL_SOURCE_NAMES = new Set([
   "GitHub Viral AI Agents",

@@ -1,0 +1,152 @@
+export const dynamic = "force-dynamic";
+
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { getTrendDetail } from "@/lib/data";
+
+function categoryColor(cat: string) {
+  const m: Record<string, string> = {
+    Agents: "text-lime-300 bg-lime-400/10 ring-lime-400/30",
+    LLMs: "text-cyan-300 bg-cyan-400/10 ring-cyan-400/30",
+    Infra: "text-purple-300 bg-purple-400/10 ring-purple-400/30",
+    UX: "text-pink-300 bg-pink-400/10 ring-pink-400/30",
+    Other: "text-zinc-300 bg-white/5 ring-white/10",
+  };
+  return m[cat] ?? m["Other"];
+}
+
+function BarChart({ stats }: { stats: { date: Date; articleCount: number }[] }) {
+  if (stats.length === 0) return null;
+  const max = Math.max(...stats.map((s) => s.articleCount), 1);
+  const W = 400;
+  const H = 80;
+  const barW = Math.floor(W / stats.length) - 2;
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 80 }}>
+      {stats.map((s, i) => {
+        const barH = Math.max(3, Math.round((s.articleCount / max) * (H - 16)));
+        const x = i * (barW + 2);
+        const y = H - barH;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={barH} rx={2} className="fill-cyan-500/60" />
+            <text x={x + barW / 2} y={H - 2} textAnchor="middle" fontSize={7} className="fill-zinc-600">
+              {new Date(s.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export default async function TrendDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const data = await getTrendDetail(id);
+  if (!data) notFound();
+
+  const { trend, articles } = data;
+
+  return (
+    <div className="min-h-dvh bg-[#07090d] text-zinc-100">
+      {/* Nav */}
+      <header className="sticky top-0 z-20 border-b border-white/5 bg-[#07090d]/90 backdrop-blur-md">
+        <div className="flex items-center justify-between px-6 py-3">
+          <Link href="/trends" className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
+              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to trends
+          </Link>
+          <span className="text-sm font-semibold text-white">SignalAI</span>
+          <div className="w-24" />
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-4xl px-6 py-12 space-y-10">
+
+        {/* Hero */}
+        <section>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${categoryColor(trend.category)}`}>
+              {trend.category}
+            </span>
+            <span className="text-xs text-zinc-500">{trend.articleCount} articles</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white md:text-4xl">{trend.name}</h1>
+          <p className="mt-4 text-base leading-relaxed text-zinc-300">{trend.summary}</p>
+
+          {/* Velocity badge */}
+          <div className="mt-5 inline-flex items-center gap-3 rounded-xl bg-black/40 px-4 py-2 ring-1 ring-white/10">
+            <span className="text-xs uppercase tracking-widest text-zinc-400">Velocity</span>
+            <span className="text-sm font-bold text-cyan-200">
+              {trend.velocity === 0 ? "—" : `${Math.round(trend.velocity * 100)}%`}
+            </span>
+          </div>
+        </section>
+
+        {/* Chart */}
+        {trend.stats.length > 0 && (
+          <section>
+            <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
+              Article volume over time
+            </div>
+            <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
+              <BarChart stats={trend.stats} />
+              <div className="mt-2 flex justify-between text-[10px] text-zinc-600">
+                <span>Older</span>
+                <span>Most recent</span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Articles */}
+        <section>
+          <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4">
+            Articles in this trend
+          </div>
+          {articles.length === 0 ? (
+            <div className="rounded-2xl border border-white/5 bg-white/5 p-6 text-sm text-zinc-500">
+              No articles yet for this trend cluster.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {articles.map((a) => (
+                <Link
+                  key={a.id}
+                  href={`/article/${a.id}`}
+                  className="group flex gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-4 hover:bg-white/[0.07] hover:border-white/10 transition"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[11px] text-zinc-500">{a.source}</span>
+                      {a.engagementStars ? (
+                        <span className="text-[11px] text-yellow-400">★ {a.engagementStars.toLocaleString()}</span>
+                      ) : a.engagementUpvotes ? (
+                        <span className="text-[11px] text-zinc-500">▲ {a.engagementUpvotes}</span>
+                      ) : null}
+                    </div>
+                    <h3 className="text-sm font-semibold text-white line-clamp-2 group-hover:text-cyan-200 transition-colors">
+                      {a.title.replace(/[—–]/g, "-")}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500 line-clamp-2">{a.summary}</p>
+                  </div>
+                  <div className="shrink-0 flex flex-col items-end gap-2">
+                    <span className="text-[10px] font-bold text-cyan-400 opacity-0 group-hover:opacity-100 transition">
+                      Read →
+                    </span>
+                    <span className="text-[10px] text-zinc-600">
+                      {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}

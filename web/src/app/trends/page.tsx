@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { Topbar } from "@/components/topbar";
 import { getTrendsPage } from "@/lib/data";
@@ -26,9 +27,10 @@ export default async function TrendsPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {trends.map((t) => (
-              <div
+              <Link
                 key={t.id}
-                className="rounded-2xl border border-white/5 bg-white/5 p-5 hover:bg-white/10"
+                href={`/trends/${t.id}`}
+                className="rounded-2xl border border-white/5 bg-white/5 p-5 hover:bg-white/10 hover:border-white/10 transition block"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -49,7 +51,7 @@ export default async function TrendsPage() {
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-300">{t.summary}</p>
-              </div>
+              </Link>
             ))}
           </div>
         )}
