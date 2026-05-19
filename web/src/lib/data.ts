@@ -156,7 +156,7 @@ export async function getGitHubRepos(filters: GitHubRepoFilters = {}) {
 
   const repos = await prisma.article.findMany({
     where,
-    orderBy: [{ engagementStars: "desc" }, { finalScore: "desc" }],
+    orderBy: [{ createdAt: "desc" }, { engagementStars: "desc" }],
     take: limit,
     select: ARTICLE_SELECT,
   });

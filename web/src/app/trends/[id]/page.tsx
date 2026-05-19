@@ -79,6 +79,23 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
 
   const { trend, articles } = data;
 
+  // Prefer TrendStat records when ≥2 days of data exist.
+  // Fallback: group articles by publishedAt date so there's always a meaningful chart.
+  const chartStats: { date: Date; articleCount: number }[] =
+    trend.stats.length >= 2
+      ? trend.stats
+      : (() => {
+          const map = new Map<string, number>();
+          for (const a of articles) {
+            if (!a.publishedAt) continue;
+            const key = new Date(a.publishedAt).toISOString().slice(0, 10);
+            map.set(key, (map.get(key) ?? 0) + 1);
+          }
+          return Array.from(map.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([date, articleCount]) => ({ date: new Date(date), articleCount }));
+        })();
+
   return (
     <div className="min-h-dvh bg-[#07090d] text-zinc-100">
       {/* Nav */}
@@ -118,13 +135,13 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
         </section>
 
         {/* Chart */}
-        {trend.stats.length > 0 && (
+        {chartStats.length > 0 && (
           <section>
             <div className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">
               Article volume over time
             </div>
             <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
-              <LineChart stats={trend.stats} />
+              <LineChart stats={chartStats} />
               <div className="mt-2 flex justify-between text-[10px] text-zinc-600">
                 <span>Older</span>
                 <span>Most recent</span>
