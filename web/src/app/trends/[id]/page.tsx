@@ -15,28 +15,59 @@ function categoryColor(cat: string) {
   return m[cat] ?? m["Other"];
 }
 
-function BarChart({ stats }: { stats: { date: Date; articleCount: number }[] }) {
+function LineChart({ stats }: { stats: { date: Date; articleCount: number }[] }) {
   if (stats.length === 0) return null;
   const max = Math.max(...stats.map((s) => s.articleCount), 1);
   const W = 400;
-  const H = 80;
-  const barW = Math.floor(W / stats.length) - 2;
+  const H = 100;
+  const padL = 8;
+  const padR = 8;
+  const padT = 10;
+  const padB = 28; // space for date labels
+
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const pts = stats.map((s, i) => {
+    const x = padL + (stats.length === 1 ? chartW / 2 : (i / (stats.length - 1)) * chartW);
+    const y = padT + chartH - Math.round((s.articleCount / max) * chartH);
+    return { x, y, s };
+  });
+
+  const polyline = pts.map((p) => `${p.x},${p.y}`).join(" ");
+
+  // Show every label if ≤7 points, else show first/last and every other
+  const showLabel = (i: number) => stats.length <= 7 || i === 0 || i === stats.length - 1 || i % 2 === 0;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 80 }}>
-      {stats.map((s, i) => {
-        const barH = Math.max(3, Math.round((s.articleCount / max) * (H - 16)));
-        const x = i * (barW + 2);
-        const y = H - barH;
-        return (
-          <g key={i}>
-            <rect x={x} y={y} width={barW} height={barH} rx={2} className="fill-cyan-500/60" />
-            <text x={x + barW / 2} y={H - 2} textAnchor="middle" fontSize={7} className="fill-zinc-600">
-              {new Date(s.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
+      {/* Grid line at top */}
+      <line x1={padL} y1={padT} x2={W - padR} y2={padT} stroke="currentColor" strokeWidth={0.5} className="text-white/5" />
+      {/* Grid line at midpoint */}
+      <line x1={padL} y1={padT + chartH / 2} x2={W - padR} y2={padT + chartH / 2} stroke="currentColor" strokeWidth={0.5} strokeDasharray="3 3" className="text-white/5" />
+      {/* Fill area under line */}
+      <polygon
+        points={`${pts[0].x},${padT + chartH} ${polyline} ${pts[pts.length - 1].x},${padT + chartH}`}
+        className="fill-cyan-500/10"
+      />
+      {/* Line */}
+      <polyline points={polyline} fill="none" stroke="#22d3ee" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+      {/* Dots + date labels */}
+      {pts.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy={p.y} r={2.5} className="fill-cyan-400" />
+          {/* Count label above dot */}
+          <text x={p.x} y={p.y - 5} textAnchor="middle" fontSize={7} className="fill-cyan-300/70">
+            {p.s.articleCount}
+          </text>
+          {/* Date label below chart */}
+          {showLabel(i) && (
+            <text x={p.x} y={H - 4} textAnchor="middle" fontSize={7} className="fill-zinc-500">
+              {new Date(p.s.date).toLocaleDateString("en-US", { month: "numeric", day: "numeric" })}
             </text>
-          </g>
-        );
-      })}
+          )}
+        </g>
+      ))}
     </svg>
   );
 }
@@ -93,7 +124,7 @@ export default async function TrendDetailPage({ params }: { params: Promise<{ id
               Article volume over time
             </div>
             <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
-              <BarChart stats={trend.stats} />
+              <LineChart stats={trend.stats} />
               <div className="mt-2 flex justify-between text-[10px] text-zinc-600">
                 <span>Older</span>
                 <span>Most recent</span>
