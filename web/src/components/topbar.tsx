@@ -18,7 +18,7 @@ export function Topbar() {
   const searchParams = useSearchParams();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const currentDays = Number(searchParams.get("days") ?? "1") || 1;
+  const currentDays = Number(searchParams.get("days") ?? "7") || 7;
   const currentSearch = searchParams.get("search") ?? "";
   const currentPerPage = Number(searchParams.get("per_page") ?? "10") || 10;
 
@@ -46,7 +46,7 @@ export function Topbar() {
   }
 
   function handleDaySelect(days: number) {
-    pushParams({ days: days === 1 ? null : String(days), page: null });
+    pushParams({ days: days === 7 ? null : String(days), page: null });
   }
 
   function handlePerPageChange(e: React.ChangeEvent<HTMLSelectElement>) {

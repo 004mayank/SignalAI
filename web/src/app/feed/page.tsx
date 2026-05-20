@@ -29,7 +29,7 @@ export default async function FeedPage(props: {
   const layer = allowedLayers.find((l) => l === sp.layer);
 
   const allowedDays = [1, 7, 30, 90] as const;
-  const days = allowedDays.find((d) => d === Number(sp.days)) ?? 1;
+  const days = allowedDays.find((d) => d === Number(sp.days)) ?? 7;
   const search = sp.search?.trim() || undefined;
 
   const perPage = [10, 15, 20].includes(Number(sp.per_page)) ? Number(sp.per_page) : 10;
