@@ -151,13 +151,27 @@ export type RepoTrendingMeta = {
   bestRank: number | null; // lowest rank seen (best = smallest number)
 };
 
+const AI_KEYWORDS = [
+  "ai", "llm", "gpt", "claude", "gemini", "anthropic", "openai", "mistral",
+  "llama", "agent", "agentic", "ml", "nlp", "neural", "transformer",
+  "chatbot", "chatgpt", "langchain", "rag", "embedding", "vector",
+  "inference", "fine-tun", "mcp", "copilot", "codex", "diffusion",
+  "hugging", "multimodal", "reasoning", "alignment",
+];
+
+function isAiRelevant(fullName: string, description: string | null): boolean {
+  const text = `${fullName} ${description ?? ""}`.toLowerCase();
+  return AI_KEYWORDS.some((kw) => text.includes(kw));
+}
+
 export async function getTodayTrendingRepos() {
   const today = startOfDayUTC(new Date());
-  return prisma.repoTrendingEntry.findMany({
+  const all = await prisma.repoTrendingEntry.findMany({
     where: { since: "daily", date: today },
     orderBy: { rank: "asc" },
     take: 25,
   });
+  return all.filter((r) => isAiRelevant(r.repoFullName, r.description));
 }
 
 export async function getTrendingCountsMap(

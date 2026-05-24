@@ -261,6 +261,7 @@ export default async function ReposPage(props: {
   const activeCategory = (sp.category ?? "All") as CategoryTab;
 
   const rawDays = Number(sp.days ?? "7");
+  const showTrendingToday = rawDays === 1;
   const days = [1, 7, 30, 90].includes(rawDays) ? Math.max(rawDays, 7) : 7;
 
   const allowedMinStars = [0, 100, 1000, 10000];
@@ -270,7 +271,7 @@ export default async function ReposPage(props: {
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const [todayTrending, allRepos, risingRepos] = await Promise.all([
-    getTodayTrendingRepos(),
+    showTrendingToday ? getTodayTrendingRepos() : Promise.resolve([]),
     getGitHubRepos({ category, viralOnly, days, limit: 500, minStars: minStars || undefined }),
     viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 6 }),
   ]);
