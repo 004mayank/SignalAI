@@ -6,8 +6,10 @@ import { Topbar } from "@/components/topbar";
 import {
   getGitHubRepos,
   getTrendingRepos,
+  getTrending90d,
   getTrendingCountsMap,
   type RepoTrendingMeta,
+  type Trending90dEntry,
 } from "@/lib/data";
 
 const VIRAL_SOURCE_NAMES = new Set([
@@ -130,6 +132,78 @@ function TrendingTodayCard({ entry }: { entry: TrendingEntry }) {
           {entry.starsToday > 0 && (
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-emerald-400/20">
               ↑ {starDisplay(entry.starsToday)} {entry.since === "weekly" ? "this week" : entry.since === "monthly" ? "this month" : "today"}
+            </span>
+          )}
+        </div>
+      </div>
+    </a>
+  );
+}
+
+// ── 90-day streak card ────────────────────────────────────────────────────────
+function Trending90dCard({ entry }: { entry: Trending90dEntry }) {
+  const parts = entry.repoFullName.split("/");
+  const owner = parts[0] ?? "";
+  const repo = parts[1] ?? entry.repoFullName;
+
+  return (
+    <a
+      href={entry.repoUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex items-start gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition hover:bg-white/[0.07] hover:border-white/10"
+    >
+      <span className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 text-xs font-bold text-zinc-400">
+        #{entry.rank}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+              <GithubIcon />
+              <span className="font-medium text-zinc-400">{owner}</span>
+              <span className="text-zinc-600">/</span>
+              <span className="font-semibold text-zinc-200 group-hover:text-white transition truncate">{repo}</span>
+            </div>
+            {entry.description && (
+              <p className="mt-1.5 line-clamp-2 text-sm text-zinc-400 leading-snug">{entry.description}</p>
+            )}
+          </div>
+
+          <div className="shrink-0 flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 ring-1 ring-white/10">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="text-yellow-400">
+                <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z" />
+              </svg>
+              <span className="text-xs font-semibold text-zinc-200">{starDisplay(entry.totalStars)}</span>
+            </div>
+            {entry.forks > 0 && (
+              <div className="flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 ring-1 ring-white/10">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="text-zinc-500">
+                  <path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878zm3.75 7.378a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm3-8.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                </svg>
+                <span className="text-xs font-semibold text-zinc-400">{starDisplay(entry.forks)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
+          {entry.language && (
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-zinc-400 ring-1 ring-white/10">
+              {entry.language}
+            </span>
+          )}
+          <span className="rounded-full bg-purple-500/15 px-2 py-0.5 text-[10px] font-bold text-purple-300 ring-1 ring-purple-400/20">
+            {entry.trendingDays}d trending
+          </span>
+          <span className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] text-zinc-400 ring-1 ring-white/10">
+            best rank #{entry.bestRank}
+          </span>
+          {entry.totalStarsGained > 0 && (
+            <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-emerald-400/20">
+              ↑ {starDisplay(entry.totalStarsGained)} total
             </span>
           )}
         </div>
@@ -266,10 +340,12 @@ export default async function ReposPage(props: {
     rawDays === 1 ? "daily" :
     rawDays === 7 ? "weekly" :
     rawDays === 30 ? "monthly" : null;
+  const show90dTrending = rawDays === 90;
   const trendingLabel =
     rawDays === 1 ? "GitHub Trending Today" :
     rawDays === 7 ? "GitHub Trending This Week" :
-    rawDays === 30 ? "GitHub Trending This Month" : null;
+    rawDays === 30 ? "GitHub Trending This Month" :
+    rawDays === 90 ? "Trending Streak — Last 90 Days" : null;
   const days = [1, 7, 30, 90].includes(rawDays) ? Math.max(rawDays, 7) : 7;
 
   const allowedMinStars = [0, 100, 1000, 10000];
@@ -278,8 +354,9 @@ export default async function ReposPage(props: {
   const perPage = [10, 15, 20].includes(Number(sp.per_page)) ? Number(sp.per_page) : 10;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const [todayTrending, allRepos, risingRepos] = await Promise.all([
+  const [todayTrending, trending90d, allRepos, risingRepos] = await Promise.all([
     trendingSince ? getTrendingRepos(trendingSince) : Promise.resolve([]),
+    show90dTrending ? getTrending90d() : Promise.resolve([]),
     getGitHubRepos({ category, viralOnly, days, limit: 500, minStars: minStars || undefined }),
     viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 6 }),
   ]);
@@ -357,6 +434,24 @@ export default async function ReposPage(props: {
             <div className="flex flex-col gap-2">
               {todayTrending.map((entry) => (
                 <TrendingTodayCard key={entry.id} entry={entry} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 90-day streak section */}
+        {show90dTrending && trending90d.length > 0 && (
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-purple-300">
+                Trending Streak — Last 90 Days
+              </span>
+              <span className="ml-auto text-[11px] text-zinc-600">{trending90d.length} repos</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {trending90d.map((entry) => (
+                <Trending90dCard key={entry.id} entry={entry} />
               ))}
             </div>
           </section>
