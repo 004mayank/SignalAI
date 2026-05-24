@@ -288,6 +288,7 @@ async function _runIngestion(params?: {
                 embedding,
                 duplicateOfId: dup.id,
                 publishedAt: item.created_at,
+                repoCreatedAt: item.repo_created_at ?? null,
               },
             });
             skipped++;
@@ -320,6 +321,7 @@ async function _runIngestion(params?: {
               embedding,
               clusterId,
               publishedAt: item.created_at,
+              repoCreatedAt: item.repo_created_at ?? null,
             },
           });
 

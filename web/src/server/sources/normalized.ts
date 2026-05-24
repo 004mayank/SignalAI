@@ -8,6 +8,7 @@ export type NormalizedItem = {
   layer: SourceLayer;
   url: string;
   created_at: Date;
+  repo_created_at?: Date | null;
   engagement: {
     stars?: number;
     upvotes?: number;

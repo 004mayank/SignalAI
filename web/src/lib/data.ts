@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/db";
 import { ArticleCategory, Prisma, SourceLayer, SourceType } from "@prisma/client";
 
+function startOfDayUTC(d: Date): Date {
+  const x = new Date(d);
+  x.setUTCHours(0, 0, 0, 0);
+  return x;
+}
+
 const ARTICLE_SELECT = {
   id: true,
   title: true,
@@ -139,6 +145,46 @@ export type GitHubRepoFilters = {
   minStars?: number;
 };
 
+export type RepoTrendingMeta = {
+  trendingDays: number;    // days on trending in last 30 days
+  bestStarsToday: number;  // max stars gained in a single day
+  bestRank: number | null; // lowest rank seen (best = smallest number)
+};
+
+export async function getTodayTrendingRepos() {
+  const today = startOfDayUTC(new Date());
+  return prisma.repoTrendingEntry.findMany({
+    where: { since: "daily", date: today },
+    orderBy: { rank: "asc" },
+    take: 25,
+  });
+}
+
+export async function getTrendingCountsMap(
+  urls: string[],
+): Promise<Map<string, RepoTrendingMeta>> {
+  if (urls.length === 0) return new Map();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const entries = await prisma.repoTrendingEntry.findMany({
+    where: { repoUrl: { in: urls }, since: "daily", date: { gte: thirtyDaysAgo } },
+    select: { repoUrl: true, rank: true, starsToday: true },
+  });
+  const map = new Map<string, RepoTrendingMeta>();
+  for (const e of entries) {
+    const ex = map.get(e.repoUrl);
+    if (!ex) {
+      map.set(e.repoUrl, { trendingDays: 1, bestStarsToday: e.starsToday, bestRank: e.rank });
+    } else {
+      map.set(e.repoUrl, {
+        trendingDays: ex.trendingDays + 1,
+        bestStarsToday: Math.max(ex.bestStarsToday, e.starsToday),
+        bestRank: Math.min(ex.bestRank ?? e.rank, e.rank),
+      });
+    }
+  }
+  return map;
+}
+
 export async function getGitHubRepos(filters: GitHubRepoFilters = {}) {
   const days = filters.days ?? 30;
   const limit = filters.limit ?? 60;
@@ -158,7 +204,7 @@ export async function getGitHubRepos(filters: GitHubRepoFilters = {}) {
     where,
     orderBy: [{ createdAt: "desc" }, { engagementStars: "desc" }],
     take: limit,
-    select: ARTICLE_SELECT,
+    select: { ...ARTICLE_SELECT, repoCreatedAt: true },
   });
 
   return repos;

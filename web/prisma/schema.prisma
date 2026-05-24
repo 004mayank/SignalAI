@@ -77,6 +77,8 @@ model Article {
   engagementUpvotes  Int?            @map("engagement_upvotes")
   engagementComments Int?            @map("engagement_comments")
 
+  repoCreatedAt      DateTime?       @map("repo_created_at")
+
   url                String          @unique
 
   publishedAt        DateTime?       @map("published_at")
@@ -162,4 +164,23 @@ model SourceHealth {
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
   @@map("source_health")
+}
+
+model RepoTrendingEntry {
+  id           String   @id @default(cuid())
+  repoFullName String   @map("repo_full_name")
+  repoUrl      String   @map("repo_url")
+  rank         Int
+  starsToday   Int      @default(0) @map("stars_today")
+  totalStars   Int      @default(0) @map("total_stars")
+  forks        Int      @default(0)
+  language     String?
+  description  String?
+  since        String   @default("daily")
+  date         DateTime
+
+  @@unique([repoFullName, since, date])
+  @@index([repoUrl])
+  @@index([date])
+  @@map("repo_trending_entries")
 }

@@ -64,9 +64,9 @@ export async function ingestGitHub(source: SourceConfig, limit = 20): Promise<No
       layer: source.layer,
       url: r.html_url,
       created_at: isNaN(createdAt.getTime()) ? new Date() : createdAt,
+      repo_created_at: repoCreatedAt,
       engagement: {
         stars,
-        // Surface forks as upvotes so the engagement scorer sees them too.
         upvotes: r.forks_count ?? 0,
       },
     } satisfies NormalizedItem];
