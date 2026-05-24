@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { Shell } from "@/components/shell";
-import { Topbar } from "@/components/topbar";
 import {
   getGitHubRepos,
   getTrendingRepos,
@@ -391,6 +390,28 @@ export default async function ReposPage(props: {
     return `/repos${qs ? `?${qs}` : ""}`;
   }
 
+  function daysUrl(val: number) {
+    const next = new URLSearchParams();
+    if (sp.category && sp.category !== "All") next.set("category", sp.category);
+    if (sp.viral) next.set("viral", sp.viral);
+    if (val !== 7) next.set("days", String(val));
+    if (sp.per_page) next.set("per_page", sp.per_page);
+    if (sp.min_stars && sp.min_stars !== "0") next.set("min_stars", sp.min_stars);
+    const qs = next.toString();
+    return `/repos${qs ? `?${qs}` : ""}`;
+  }
+
+  function perPageUrl(val: number) {
+    const next = new URLSearchParams();
+    if (sp.category && sp.category !== "All") next.set("category", sp.category);
+    if (sp.viral) next.set("viral", sp.viral);
+    if (sp.days) next.set("days", sp.days);
+    if (val !== 10) next.set("per_page", String(val));
+    if (sp.min_stars && sp.min_stars !== "0") next.set("min_stars", sp.min_stars);
+    const qs = next.toString();
+    return `/repos${qs ? `?${qs}` : ""}`;
+  }
+
   function starsUrl(val: number) {
     const next = new URLSearchParams();
     if (sp.category && sp.category !== "All") next.set("category", sp.category);
@@ -405,8 +426,6 @@ export default async function ReposPage(props: {
   return (
     <Shell>
       <div className="space-y-8">
-        <Topbar />
-
         {/* Hero */}
         <section>
           <div className="flex items-center gap-2 mb-3">
@@ -420,6 +439,41 @@ export default async function ReposPage(props: {
             GitHub&apos;s trending AI repos ranked and scored. Updated daily.
           </p>
         </section>
+
+        {/* Time filter + per-page */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            {([{ label: "Today", value: 1 }, { label: "7d", value: 7 }, { label: "30d", value: 30 }, { label: "90d", value: 90 }] as const).map(({ label, value }) => (
+              <Link
+                key={value}
+                href={daysUrl(value)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  rawDays === value
+                    ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-zinc-500">Show</span>
+            {([10, 15, 20] as const).map((n) => (
+              <Link
+                key={n}
+                href={perPageUrl(n)}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                  perPage === n
+                    ? "bg-white/10 text-zinc-200 ring-1 ring-white/20"
+                    : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {n}
+              </Link>
+            ))}
+          </div>
+        </div>
 
         {/* GitHub Trending section */}
         {todayTrending.length > 0 && trendingLabel && (
