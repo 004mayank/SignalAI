@@ -61,7 +61,7 @@ export async function scrapeGitHubTrending(
       $(el).find('a[href*="/stargazers"]').first().text(),
     );
     const forks = parseNum(
-      $(el).find('a[href*="/network/members"]').first().text(),
+      $(el).find('a[href*="/forks"]').first().text(),
     );
 
     // GitHub trending shows "X stars today" or "X stars this week/month"
