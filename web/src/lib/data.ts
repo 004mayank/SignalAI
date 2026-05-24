@@ -98,23 +98,9 @@ export async function getArticleById(id: string) {
   });
 }
 
-export async function getTrendsPage(limit = 200, days?: number) {
-  const where: Prisma.TrendWhereInput = { articleCount: { gte: 2 } };
-
-  if (days) {
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const recentClusters = await prisma.article.findMany({
-      where: { createdAt: { gte: cutoff }, duplicateOfId: null, clusterId: { not: null } },
-      select: { clusterId: true },
-      distinct: ["clusterId"],
-    });
-    const ids = recentClusters.map((a) => a.clusterId).filter(Boolean) as string[];
-    if (ids.length === 0) return [];
-    where.clusterId = { in: ids };
-  }
-
+export async function getTrendsPage(limit = 200) {
   return prisma.trend.findMany({
-    where,
+    where: { articleCount: { gte: 2 } },
     orderBy: [{ articleCount: "desc" }, { velocity: "desc" }],
     take: limit,
   });

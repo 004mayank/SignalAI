@@ -4,13 +4,6 @@ import Link from "next/link";
 import { Shell } from "@/components/shell";
 import { getTrendsPage } from "@/lib/data";
 
-const DAYS_OPTIONS = [
-  { label: "Today", value: 1 },
-  { label: "7d", value: 7 },
-  { label: "30d", value: 30 },
-  { label: "90d", value: 90 },
-] as const;
-
 const CATEGORY_COLORS: Record<string, string> = {
   Agents: "text-lime-300",
   LLMs: "text-cyan-300",
@@ -20,31 +13,21 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export default async function TrendsPage(props: {
-  searchParams: Promise<{ page?: string; per_page?: string; days?: string }>;
+  searchParams: Promise<{ page?: string; per_page?: string }>;
 }) {
   const sp = await props.searchParams;
 
-  const rawDays = [1, 7, 30, 90].includes(Number(sp.days)) ? Number(sp.days) : 7;
   const perPage = [10, 15, 20].includes(Number(sp.per_page)) ? Number(sp.per_page) : 10;
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  const trends = await getTrendsPage(200, rawDays);
+  const trends = await getTrendsPage(200);
 
   const totalPages = Math.max(1, Math.ceil(trends.length / perPage));
   const safePage = Math.min(page, totalPages);
   const pageTrends = trends.slice((safePage - 1) * perPage, safePage * perPage);
 
-  function daysUrl(val: number) {
-    const params = new URLSearchParams();
-    if (val !== 7) params.set("days", String(val));
-    if (sp.per_page) params.set("per_page", sp.per_page);
-    const qs = params.toString();
-    return `/trends${qs ? `?${qs}` : ""}`;
-  }
-
   function perPageUrl(val: number) {
     const params = new URLSearchParams();
-    if (rawDays !== 7) params.set("days", String(rawDays));
     if (val !== 10) params.set("per_page", String(val));
     const qs = params.toString();
     return `/trends${qs ? `?${qs}` : ""}`;
@@ -52,41 +35,20 @@ export default async function TrendsPage(props: {
 
   function pageUrl(p: number) {
     const params = new URLSearchParams();
-    if (rawDays !== 7) params.set("days", String(rawDays));
     if (sp.per_page) params.set("per_page", sp.per_page);
     if (p > 1) params.set("page", String(p));
     const qs = params.toString();
     return `/trends${qs ? `?${qs}` : ""}`;
   }
 
-  const windowLabel =
-    rawDays === 1 ? "today" :
-    rawDays === 7 ? "the last 7 days" :
-    rawDays === 30 ? "the last 30 days" :
-    "the last 90 days";
-
   return (
     <Shell sidebarFilters={false}>
       <div className="space-y-8">
 
-        {/* Header + time filter */}
+        {/* Header */}
         <section>
           <div className="flex items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              {DAYS_OPTIONS.map(({ label, value }) => (
-                <Link
-                  key={value}
-                  href={daysUrl(value)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    rawDays === value
-                      ? "bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
-            </div>
+            <div /> {/* spacer */}
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] text-zinc-500">Show</span>
               {([10, 15, 20] as const).map((n) => (
@@ -107,14 +69,14 @@ export default async function TrendsPage(props: {
 
           <h1 className="text-4xl font-semibold tracking-tight text-white">Trends</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
-            Topic clusters from {windowLabel} — grouped by semantic similarity across ingested signals.
-            Sorted by article coverage.
+            Persistent topic clusters — articles grouped by semantic similarity across all ingested signals.
+            Sorted by coverage depth.
           </p>
         </section>
 
         {trends.length === 0 ? (
           <div className="rounded-2xl border border-white/5 bg-white/5 p-6 text-sm text-zinc-400">
-            No multi-article trends in this window yet. Try a wider time range or run ingestion.
+            No multi-article trends yet. Run ingestion to generate embeddings and clusters.
           </div>
         ) : (
           <>
@@ -143,7 +105,6 @@ export default async function TrendsPage(props: {
                           {t.name}
                         </div>
                       </div>
-                      {/* Signal badge: article count is the honest strength indicator */}
                       <div className="shrink-0 rounded-xl bg-black/40 px-3 py-2 text-center min-w-[52px] ring-1 ring-white/10">
                         <div className="text-[10px] uppercase tracking-wide text-zinc-500">Signal</div>
                         <div className="text-lg font-bold text-cyan-200 leading-none mt-0.5">
