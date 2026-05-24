@@ -145,7 +145,10 @@ export function AppSidebar({ showFilters = true }: Props) {
         <NewsletterSubscribe />
       </div>
 
-      <div className="mt-6 text-[11px] text-zinc-600">© 2026 SignalAI</div>
+      <div className="mt-6 flex items-center justify-between text-[11px] text-zinc-600">
+        <span>© 2026 SignalAI</span>
+        <Link href="/terms" className="hover:text-zinc-400 transition">Terms</Link>
+      </div>
     </aside>
   );
 }
