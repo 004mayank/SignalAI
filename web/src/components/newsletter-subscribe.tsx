@@ -1,13 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type State = "idle" | "loading" | "success" | "error";
+
+const LS_KEY = "signalai_newsletter_subscribed";
 
 export function NewsletterSubscribe() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (localStorage.getItem(LS_KEY)) setState("success");
+  }, []);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,6 +31,7 @@ export function NewsletterSubscribe() {
         setState("error");
         return;
       }
+      localStorage.setItem(LS_KEY, email);
       setState("success");
     } catch {
       setErrorMsg("Network error - please try again");
