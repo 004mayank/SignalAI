@@ -5,7 +5,7 @@ import { Shell } from "@/components/shell";
 import { Topbar } from "@/components/topbar";
 import {
   getGitHubRepos,
-  getTodayTrendingRepos,
+  getTrendingRepos,
   getTrendingCountsMap,
   type RepoTrendingMeta,
 } from "@/lib/data";
@@ -67,6 +67,7 @@ type TrendingEntry = {
   forks: number;
   language: string | null;
   description: string | null;
+  since: string;
 };
 
 function TrendingTodayCard({ entry }: { entry: TrendingEntry }) {
@@ -128,7 +129,7 @@ function TrendingTodayCard({ entry }: { entry: TrendingEntry }) {
           )}
           {entry.starsToday > 0 && (
             <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-emerald-400/20">
-              ↑ {starDisplay(entry.starsToday)} today
+              ↑ {starDisplay(entry.starsToday)} {entry.since === "weekly" ? "this week" : entry.since === "monthly" ? "this month" : "today"}
             </span>
           )}
         </div>
@@ -261,7 +262,14 @@ export default async function ReposPage(props: {
   const activeCategory = (sp.category ?? "All") as CategoryTab;
 
   const rawDays = Number(sp.days ?? "7");
-  const showTrendingToday = rawDays === 1;
+  const trendingSince =
+    rawDays === 1 ? "daily" :
+    rawDays === 7 ? "weekly" :
+    rawDays === 30 ? "monthly" : null;
+  const trendingLabel =
+    rawDays === 1 ? "GitHub Trending Today" :
+    rawDays === 7 ? "GitHub Trending This Week" :
+    rawDays === 30 ? "GitHub Trending This Month" : null;
   const days = [1, 7, 30, 90].includes(rawDays) ? Math.max(rawDays, 7) : 7;
 
   const allowedMinStars = [0, 100, 1000, 10000];
@@ -271,7 +279,7 @@ export default async function ReposPage(props: {
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
   const [todayTrending, allRepos, risingRepos] = await Promise.all([
-    showTrendingToday ? getTodayTrendingRepos() : Promise.resolve([]),
+    trendingSince ? getTrendingRepos(trendingSince) : Promise.resolve([]),
     getGitHubRepos({ category, viralOnly, days, limit: 500, minStars: minStars || undefined }),
     viralOnly ? Promise.resolve([]) : getGitHubRepos({ viralOnly: true, days: 14, limit: 6 }),
   ]);
@@ -336,13 +344,13 @@ export default async function ReposPage(props: {
           </p>
         </section>
 
-        {/* GitHub Trending Today */}
-        {todayTrending.length > 0 && (
+        {/* GitHub Trending section */}
+        {todayTrending.length > 0 && trendingLabel && (
           <section>
             <div className="flex items-center gap-2 mb-4">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">
-                GitHub Trending Today
+                {trendingLabel}
               </span>
               <span className="ml-auto text-[11px] text-zinc-600">{todayTrending.length} repos</span>
             </div>

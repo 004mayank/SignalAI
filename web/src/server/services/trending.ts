@@ -13,13 +13,15 @@ export type TrendingScrapeResult = {
   errors: string[];
 };
 
-export async function runTrendingScrape(): Promise<TrendingScrapeResult> {
-  const today = startOfDayUTC(new Date());
-  const repos = await scrapeGitHubTrending("daily");
+async function scrapeAndUpsert(
+  since: "daily" | "weekly" | "monthly",
+  date: Date,
+): Promise<TrendingScrapeResult> {
+  const repos = await scrapeGitHubTrending(since);
 
   if (repos.length === 0) {
-    console.warn("[trending] scrape returned 0 repos — GitHub may have changed layout");
-    return { scraped: 0, upserted: 0, errors: ["No repos scraped — possible layout change"] };
+    console.warn(`[trending] ${since} scrape returned 0 repos`);
+    return { scraped: 0, upserted: 0, errors: [`No repos for ${since}`] };
   }
 
   let upserted = 0;
@@ -28,13 +30,7 @@ export async function runTrendingScrape(): Promise<TrendingScrapeResult> {
   for (const repo of repos) {
     try {
       await prisma.repoTrendingEntry.upsert({
-        where: {
-          repoFullName_since_date: {
-            repoFullName: repo.fullName,
-            since: "daily",
-            date: today,
-          },
-        },
+        where: { repoFullName_since_date: { repoFullName: repo.fullName, since, date } },
         create: {
           repoFullName: repo.fullName,
           repoUrl: repo.repoUrl,
@@ -44,8 +40,8 @@ export async function runTrendingScrape(): Promise<TrendingScrapeResult> {
           forks: repo.forks,
           language: repo.language,
           description: repo.description,
-          since: "daily",
-          date: today,
+          since,
+          date,
         },
         update: {
           rank: repo.rank,
@@ -60,6 +56,18 @@ export async function runTrendingScrape(): Promise<TrendingScrapeResult> {
     }
   }
 
-  console.log(`[trending] scraped=${repos.length} upserted=${upserted} errors=${errors.length}`);
   return { scraped: repos.length, upserted, errors };
+}
+
+export async function runTrendingScrape(): Promise<Record<string, TrendingScrapeResult>> {
+  const today = startOfDayUTC(new Date());
+
+  const [daily, weekly, monthly] = await Promise.all([
+    scrapeAndUpsert("daily", today),
+    scrapeAndUpsert("weekly", today),
+    scrapeAndUpsert("monthly", today),
+  ]);
+
+  console.log("[trending] daily:", daily.scraped, "weekly:", weekly.scraped, "monthly:", monthly.scraped);
+  return { daily, weekly, monthly };
 }

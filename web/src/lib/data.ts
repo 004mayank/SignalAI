@@ -164,10 +164,10 @@ function isAiRelevant(fullName: string, description: string | null): boolean {
   return AI_KEYWORDS.some((kw) => text.includes(kw));
 }
 
-export async function getTodayTrendingRepos() {
+export async function getTrendingRepos(since: "daily" | "weekly" | "monthly") {
   const today = startOfDayUTC(new Date());
   const all = await prisma.repoTrendingEntry.findMany({
-    where: { since: "daily", date: today },
+    where: { since, date: today },
     orderBy: { rank: "asc" },
     take: 25,
   });
