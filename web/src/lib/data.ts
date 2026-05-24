@@ -98,9 +98,24 @@ export async function getArticleById(id: string) {
   });
 }
 
-export async function getTrendsPage(limit = 50) {
+export async function getTrendsPage(limit = 200, days?: number) {
+  const where: Prisma.TrendWhereInput = { articleCount: { gte: 2 } };
+
+  if (days) {
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const recentClusters = await prisma.article.findMany({
+      where: { createdAt: { gte: cutoff }, duplicateOfId: null, clusterId: { not: null } },
+      select: { clusterId: true },
+      distinct: ["clusterId"],
+    });
+    const ids = recentClusters.map((a) => a.clusterId).filter(Boolean) as string[];
+    if (ids.length === 0) return [];
+    where.clusterId = { in: ids };
+  }
+
   return prisma.trend.findMany({
-    orderBy: [{ velocity: "desc" }, { articleCount: "desc" }],
+    where,
+    orderBy: [{ articleCount: "desc" }, { velocity: "desc" }],
     take: limit,
   });
 }
@@ -172,6 +187,62 @@ export async function getTrendingRepos(since: "daily" | "weekly" | "monthly") {
     take: 25,
   });
   return all.filter((r) => isAiRelevant(r.repoFullName, r.description));
+}
+
+export type Trending90dEntry = {
+  id: string;
+  repoFullName: string;
+  repoUrl: string;
+  rank: number;
+  trendingDays: number;     // days seen on trending in last 90d
+  bestRank: number;         // best (lowest) rank achieved
+  totalStarsGained: number; // sum of starsToday across all appearances
+  totalStars: number;
+  forks: number;
+  language: string | null;
+  description: string | null;
+};
+
+export async function getTrending90d(): Promise<Trending90dEntry[]> {
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+  const entries = await prisma.repoTrendingEntry.findMany({
+    where: { since: "daily", date: { gte: ninetyDaysAgo } },
+    orderBy: { date: "desc" },
+  });
+
+  const map = new Map<string, Trending90dEntry>();
+  for (const e of entries) {
+    const ex = map.get(e.repoFullName);
+    if (!ex) {
+      map.set(e.repoFullName, {
+        id: e.id,
+        repoFullName: e.repoFullName,
+        repoUrl: e.repoUrl,
+        rank: 0,
+        trendingDays: 1,
+        bestRank: e.rank,
+        totalStarsGained: e.starsToday,
+        totalStars: e.totalStars,
+        forks: e.forks,
+        language: e.language,
+        description: e.description,
+      });
+    } else {
+      map.set(e.repoFullName, {
+        ...ex,
+        trendingDays: ex.trendingDays + 1,
+        bestRank: Math.min(ex.bestRank, e.rank),
+        totalStarsGained: ex.totalStarsGained + e.starsToday,
+      });
+    }
+  }
+
+  return Array.from(map.values())
+    .filter((r) => isAiRelevant(r.repoFullName, r.description))
+    .sort((a, b) => b.trendingDays - a.trendingDays || a.bestRank - b.bestRank)
+    .map((r, i) => ({ ...r, rank: i + 1 }))
+    .slice(0, 25);
 }
 
 export async function getTrendingCountsMap(
