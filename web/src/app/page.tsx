@@ -4,6 +4,7 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { WhoIsItFor } from "@/components/home/WhoIsItFor";
 import { NodeMesh } from "@/components/home/NodeMesh";
 import { Marquee } from "@/components/home/Marquee";
+import { HomeNewsletterCta } from "@/components/home-newsletter-cta";
 
 export const dynamic = "force-dynamic";
 
@@ -206,12 +207,7 @@ export default async function HomePage() {
             </div>
             <h2 className="text-3xl font-bold text-white md:text-4xl">AI intelligence in your inbox, every week.</h2>
             <p className="mt-4 text-lg text-zinc-400">The five signals that mattered most this week, curated and structured. No filler.</p>
-            <div className="mt-8">
-              <Link href="/newsletter" className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-8 py-4 text-sm font-bold text-black hover:opacity-90 transition-opacity">
-                Subscribe on Beehiiv
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7.5 3.5M11 7L7.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </Link>
-            </div>
+            <HomeNewsletterCta />
             <p className="mt-4 text-xs text-zinc-600">No spam. Unsubscribe any time.</p>
           </div>
         </div>
@@ -250,7 +246,10 @@ export default async function HomePage() {
         </div>
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/5 pt-6 sm:flex-row">
           <div className="text-xs text-zinc-700">2026 SignalAI. All rights reserved.</div>
-          <Link href="/feed" className="text-xs text-cyan-600 hover:text-cyan-400 transition-colors">Explore the Feed</Link>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Terms</Link>
+            <Link href="/feed" className="text-xs text-cyan-600 hover:text-cyan-400 transition-colors">Explore the Feed</Link>
+          </div>
         </div>
       </footer>
     </div>
