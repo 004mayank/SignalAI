@@ -69,8 +69,8 @@ export default async function TrendsPage(props: {
 
           <h1 className="text-4xl font-semibold tracking-tight text-white">Trends</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
-            Persistent topic clusters — articles grouped by semantic similarity across all ingested signals.
-            Sorted by coverage depth.
+            Persistent topic clusters. Articles grouped by semantic similarity across all ingested signals,
+            sorted by coverage depth.
           </p>
         </section>
 
