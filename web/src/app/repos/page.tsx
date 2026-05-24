@@ -110,12 +110,14 @@ function TrendingTodayCard({ entry }: { entry: TrendingEntry }) {
               </svg>
               <span className="text-xs font-semibold text-zinc-200">{starDisplay(entry.totalStars)}</span>
             </div>
-            <div className="flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 ring-1 ring-white/10">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="text-zinc-500">
-                <path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878zm3.75 7.378a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm3-8.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-              </svg>
-              <span className="text-xs font-semibold text-zinc-400">{starDisplay(entry.forks)}</span>
-            </div>
+            {entry.forks > 0 && (
+              <div className="flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 ring-1 ring-white/10">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="text-zinc-500">
+                  <path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878zm3.75 7.378a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm3-8.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                </svg>
+                <span className="text-xs font-semibold text-zinc-400">{starDisplay(entry.forks)}</span>
+              </div>
+            )}
           </div>
         </div>
 

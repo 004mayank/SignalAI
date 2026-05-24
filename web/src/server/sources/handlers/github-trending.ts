@@ -55,11 +55,13 @@ export async function scrapeGitHubTrending(
       $(el).find("[itemprop='programmingLanguage']").first().text().trim() ||
       null;
 
+    // Use contains selector — GitHub's trending page sometimes omits the exact
+    // full-path href depending on how they render the stats row.
     const totalStars = parseNum(
-      $(el).find(`a[href="/${fullName}/stargazers"]`).text(),
+      $(el).find('a[href*="/stargazers"]').first().text(),
     );
     const forks = parseNum(
-      $(el).find(`a[href="/${fullName}/network/members"]`).text(),
+      $(el).find('a[href*="/network/members"]').first().text(),
     );
 
     // GitHub trending shows "X stars today" or "X stars this week/month"
