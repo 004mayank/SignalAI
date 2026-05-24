@@ -145,7 +145,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
             <span className="text-xs uppercase tracking-widest text-zinc-400">Signal strength</span>
             <span className="text-sm font-bold text-cyan-200">{scoreLabel(article.finalScore ?? 0)}</span>
             <span className="text-zinc-600">·</span>
-            <span className="text-xs text-zinc-400">{article.engagementStars ? `${article.engagementStars.toLocaleString()} stars` : article.engagementUpvotes ? `${article.engagementUpvotes} upvotes` : article.source}</span>
+            <span className="text-xs text-zinc-400">{article.engagementStars ? `${article.engagementStars.toLocaleString()} stars` : article.engagementUpvotes ? `${article.engagementUpvotes} ${article.sourceType === "github" ? "forks" : "upvotes"}` : article.source}</span>
           </div>
         </div>
       </div>
@@ -281,7 +281,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                 ) : null}
                 {article.engagementUpvotes ? (
                   <div className="flex justify-between">
-                    <span className="text-zinc-500">Upvotes</span>
+                    <span className="text-zinc-500">{article.sourceType === "github" ? "Forks" : "Upvotes"}</span>
                     <span className="text-zinc-200">{article.engagementUpvotes.toLocaleString()}</span>
                   </div>
                 ) : null}
