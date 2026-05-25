@@ -1,7 +1,7 @@
 {
   "crons": [
-    { "path": "/api/cron/ingest", "schedule": "0 */6 * * *" },
-    { "path": "/api/cron/trending", "schedule": "30 */6 * * *" },
+    { "path": "/api/cron/ingest", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/trending", "schedule": "0 8 * * *" },
     { "path": "/api/cron/newsletter", "schedule": "0 6 * * 5" }
   ]
 }
