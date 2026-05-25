@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getArticleById } from "@/lib/data";
 import { generateDeepArticle, type DeepArticle } from "@/lib/ai";
+import { DeepLoader } from "@/components/deep-loader";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -138,83 +139,6 @@ function DeepSections({ deep, url, source }: { deep: DeepArticle; url: string; s
   );
 }
 
-function DeepContentSkeleton({ url, source }: { url: string; source: string }) {
-  return (
-    <>
-      <div className="h-px bg-white/5" />
-
-      {[
-        { label: "The bigger picture", color: "bg-lime-400/20" },
-        { label: "Technical deep dive", color: "bg-purple-400/20" },
-      ].map(({ label, color }) => (
-        <section key={label} className="animate-pulse">
-          <div className={`mb-5 h-2.5 w-36 rounded ${color}`} />
-          <div className="space-y-2.5">
-            <div className="h-4 w-full rounded bg-white/5" />
-            <div className="h-4 w-11/12 rounded bg-white/5" />
-            <div className="h-4 w-4/5 rounded bg-white/5" />
-            <div className="h-4 w-full rounded bg-white/5" />
-            <div className="h-4 w-2/3 rounded bg-white/5" />
-          </div>
-        </section>
-      ))}
-
-      <div className="h-px bg-white/5" />
-
-      <section className="animate-pulse">
-        <div className="mb-5 h-2.5 w-44 rounded bg-amber-400/20" />
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex gap-4 rounded-xl border border-white/5 bg-white/5 p-5">
-              <div className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-white/10" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-full rounded bg-white/5" />
-                <div className="h-4 w-2/3 rounded bg-white/5" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="h-px bg-white/5" />
-
-      <section className="animate-pulse">
-        <div className="mb-5 h-2.5 w-28 rounded bg-cyan-400/20" />
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex gap-4 items-start">
-              <div className="mt-1.5 h-4 w-4 shrink-0 rounded bg-white/10" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-full rounded bg-white/5" />
-                <div className="h-4 w-1/2 rounded bg-white/5" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="rounded-3xl border border-white/5 bg-white/5 p-8 text-center">
-        <p className="text-sm text-zinc-400">Go deeper - read the original source</p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-7 py-3 text-sm font-bold text-black transition-opacity hover:opacity-90"
-        >
-          Open {source}
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M4 10L10 4M10 4H6.5M10 4V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </a>
-        <div className="mt-4">
-          <Link href="/feed" className="text-xs text-zinc-500 hover:text-zinc-300">
-            Back to all signals
-          </Link>
-        </div>
-      </div>
-    </>
-  );
-}
 
 export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -330,7 +254,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
           )}
 
           {/* Deep AI sections — streamed in via Suspense */}
-          <Suspense fallback={<DeepContentSkeleton url={article.url} source={article.source} />}>
+          <Suspense fallback={<DeepLoader />}>
             <DeepContent article={article} />
           </Suspense>
         </article>
