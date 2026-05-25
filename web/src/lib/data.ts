@@ -167,11 +167,29 @@ function isAiRelevant(fullName: string, description: string | null): boolean {
 
 export async function getTrendingRepos(since: "daily" | "weekly" | "monthly") {
   const today = startOfDayUTC(new Date());
-  const all = await prisma.repoTrendingEntry.findMany({
+
+  // Try today first; if the cron hasn't run yet, fall back to the most recent date.
+  let all = await prisma.repoTrendingEntry.findMany({
     where: { since, date: today },
     orderBy: { rank: "asc" },
     take: 25,
   });
+
+  if (all.length === 0) {
+    const latest = await prisma.repoTrendingEntry.findFirst({
+      where: { since },
+      orderBy: { date: "desc" },
+      select: { date: true },
+    });
+    if (latest) {
+      all = await prisma.repoTrendingEntry.findMany({
+        where: { since, date: latest.date },
+        orderBy: { rank: "asc" },
+        take: 25,
+      });
+    }
+  }
+
   return all.filter((r) => isAiRelevant(r.repoFullName, r.description));
 }
 
