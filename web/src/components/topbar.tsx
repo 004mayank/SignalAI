@@ -66,15 +66,6 @@ export function Topbar() {
           />
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <div className="flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs text-zinc-300">
-            <span className="h-2 w-2 rounded-full bg-lime-400" />
-            <span className="uppercase tracking-wide">Live feed active</span>
-          </div>
-          <button className="rounded-full border border-white/5 bg-white/5 px-3 py-2 text-xs text-zinc-300 hover:bg-white/10">
-            ⚙
-          </button>
-        </div>
       </div>
 
       {/* Timeline + per-page filters */}
