@@ -45,6 +45,19 @@ function impactColor(level: string) {
   return "text-zinc-400";
 }
 
+function relativeTime(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  if (diffMins < 2) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHrs = Math.floor(diffMins / 60);
+  if (diffHrs < 24) return `${diffHrs}h ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  if (diffDays === 1) return "yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export default async function HomePage() {
   let articles: Awaited<ReturnType<typeof getArticles>> = [];
   try {
@@ -168,9 +181,7 @@ export default async function HomePage() {
                   })()}
                   <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-zinc-400">{a.summary}</p>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="text-xs text-zinc-600">
-                      {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}
-                    </span>
+                    <span className="text-xs text-zinc-600">{relativeTime(a.createdAt)}</span>
                     <span className="text-xs font-bold text-cyan-400 opacity-0 transition-opacity group-hover:opacity-100">Read briefing →</span>
                   </div>
                 </Link>
