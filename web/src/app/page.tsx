@@ -66,6 +66,9 @@ export default async function HomePage() {
     // DB unavailable — render empty state rather than crashing
   }
   const liveSignals = articles.slice(0, 6);
+  const lastUpdated = articles.length > 0
+    ? relativeTime(articles[0].createdAt)
+    : null;
 
   return (
     <div className="min-h-dvh bg-[#07090d] text-zinc-100">
@@ -142,7 +145,9 @@ export default async function HomePage() {
         <div className="px-8 lg:px-16">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Live right now</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                {lastUpdated ? `Updated ${lastUpdated}` : "Latest signals"}
+              </p>
               <h2 className="mt-2 text-2xl font-bold text-white md:text-3xl">Latest signals from the feed.</h2>
             </div>
             <Link href="/feed" className="group hidden items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors md:flex">
