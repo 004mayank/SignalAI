@@ -1,9 +1,8 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getArticleById } from "@/lib/data";
-import { generateDeepArticle } from "@/lib/ai";
-
-export const dynamic = "force-dynamic";
+import { generateDeepArticle, type DeepArticle } from "@/lib/ai";
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -13,13 +12,10 @@ function scoreLabel(score: number) {
   return `${clamp(score, 0, 5).toFixed(1)}/5`;
 }
 
-// LLMs occasionally emit em-dashes despite instructions. Strip them at render time.
 function clean(text: string): string {
   return text.replace(/[—–]/g, "-").replace(/\s{2,}/g, " ").trim();
 }
 
-// For GitHub repos the title is "owner/repo: description".
-// Return description as the primary heading and owner/repo as subtitle.
 function parseTitle(title: string): { primary: string; repo?: string } {
   const colonIdx = title.indexOf(": ");
   if (colonIdx !== -1) {
@@ -49,11 +45,9 @@ function impactColor(level: string) {
   return "text-zinc-300 bg-white/5 ring-white/10";
 }
 
-export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const article = await getArticleById(id);
-  if (!article) notFound();
+type Article = NonNullable<Awaited<ReturnType<typeof getArticleById>>>;
 
+async function DeepContent({ article }: { article: Article }) {
   const deep = await generateDeepArticle({
     id: article.id,
     title: article.title,
@@ -68,6 +62,164 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
     useCase: article.useCase,
     actionableTakeaway: article.actionableTakeaway,
   });
+
+  return <DeepSections deep={deep} url={article.url} source={article.source} />;
+}
+
+function DeepSections({ deep, url, source }: { deep: DeepArticle; url: string; source: string }) {
+  return (
+    <>
+      <div className="h-px bg-white/5" />
+
+      <section>
+        <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-lime-400">The bigger picture</h2>
+        <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.bigger_picture)}</p>
+      </section>
+
+      <div className="h-px bg-white/5" />
+
+      <section>
+        <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-purple-400">Technical deep dive</h2>
+        <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.technical_deep_dive)}</p>
+      </section>
+
+      <div className="h-px bg-white/5" />
+
+      <section>
+        <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-amber-400">Real-world applications</h2>
+        <div className="space-y-4">
+          {deep.real_world_applications.map((app, i) => (
+            <div key={i} className="flex gap-4 rounded-xl border border-white/5 bg-white/5 p-5">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-xs font-bold text-amber-300">
+                {i + 1}
+              </span>
+              <p className="text-base leading-relaxed text-zinc-300">{clean(app)}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="h-px bg-white/5" />
+
+      <section>
+        <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-cyan-400">What to do now</h2>
+        <div className="space-y-4">
+          {deep.what_to_do_now.map((action, i) => (
+            <div key={i} className="flex gap-4 items-start">
+              <svg className="mt-1.5 shrink-0 text-cyan-400" width="16" height="16" viewBox="0 0 14 14" fill="none">
+                <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <p className="text-base leading-relaxed text-zinc-200">{clean(action)}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="rounded-3xl border border-white/5 bg-white/5 p-8 text-center">
+        <p className="text-sm text-zinc-400">Go deeper - read the original source</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-7 py-3 text-sm font-bold text-black transition-opacity hover:opacity-90"
+        >
+          Open {source}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M4 10L10 4M10 4H6.5M10 4V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
+        <div className="mt-4">
+          <Link href="/feed" className="text-xs text-zinc-500 hover:text-zinc-300">
+            Back to all signals
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function DeepContentSkeleton({ url, source }: { url: string; source: string }) {
+  return (
+    <>
+      <div className="h-px bg-white/5" />
+
+      {[
+        { label: "The bigger picture", color: "bg-lime-400/20" },
+        { label: "Technical deep dive", color: "bg-purple-400/20" },
+      ].map(({ label, color }) => (
+        <section key={label} className="animate-pulse">
+          <div className={`mb-5 h-2.5 w-36 rounded ${color}`} />
+          <div className="space-y-2.5">
+            <div className="h-4 w-full rounded bg-white/5" />
+            <div className="h-4 w-11/12 rounded bg-white/5" />
+            <div className="h-4 w-4/5 rounded bg-white/5" />
+            <div className="h-4 w-full rounded bg-white/5" />
+            <div className="h-4 w-2/3 rounded bg-white/5" />
+          </div>
+        </section>
+      ))}
+
+      <div className="h-px bg-white/5" />
+
+      <section className="animate-pulse">
+        <div className="mb-5 h-2.5 w-44 rounded bg-amber-400/20" />
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-4 rounded-xl border border-white/5 bg-white/5 p-5">
+              <div className="mt-0.5 h-6 w-6 shrink-0 rounded-full bg-white/10" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-full rounded bg-white/5" />
+                <div className="h-4 w-2/3 rounded bg-white/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="h-px bg-white/5" />
+
+      <section className="animate-pulse">
+        <div className="mb-5 h-2.5 w-28 rounded bg-cyan-400/20" />
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-4 items-start">
+              <div className="mt-1.5 h-4 w-4 shrink-0 rounded bg-white/10" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-full rounded bg-white/5" />
+                <div className="h-4 w-1/2 rounded bg-white/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="rounded-3xl border border-white/5 bg-white/5 p-8 text-center">
+        <p className="text-sm text-zinc-400">Go deeper - read the original source</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-7 py-3 text-sm font-bold text-black transition-opacity hover:opacity-90"
+        >
+          Open {source}
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M4 10L10 4M10 4H6.5M10 4V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
+        <div className="mt-4">
+          <Link href="/feed" className="text-xs text-zinc-500 hover:text-zinc-300">
+            Back to all signals
+          </Link>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default async function ArticlePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const article = await getArticleById(id);
+  if (!article) notFound();
 
   const publishedDate = article.publishedAt ?? article.createdAt;
 
@@ -104,7 +256,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
       <div className="relative overflow-hidden border-b border-white/5 bg-gradient-to-br from-[#07090d] via-cyan-950/20 to-[#07090d] px-6 py-14">
         <div className="absolute inset-0 opacity-20 [background:radial-gradient(900px_circle_at_20%_50%,rgba(34,211,238,0.15),transparent_55%),radial-gradient(700px_circle_at_80%_20%,rgba(168,85,247,0.12),transparent_45%)]" />
         <div className="relative">
-          {/* Tags */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className={`rounded-full px-2.5 py-1 font-semibold ring-1 ${categoryColor(article.category)}`}>
               {article.category}
@@ -120,7 +271,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
             </span>
           </div>
 
-          {/* Title */}
           {(() => {
             const { primary, repo } = parseTitle(article.title);
             return (
@@ -135,12 +285,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
             );
           })()}
 
-          {/* Key quote */}
           <blockquote className="mt-6 max-w-3xl border-l-2 border-cyan-400/50 pl-5 text-lg leading-relaxed text-zinc-300 italic">
-            {clean(deep.key_quote)}
+            {clean(article.summary)}
           </blockquote>
 
-          {/* Signal strength */}
           <div className="mt-6 inline-flex items-center gap-3 rounded-xl bg-black/40 px-4 py-2 ring-1 ring-white/10">
             <span className="text-xs uppercase tracking-widest text-zinc-400">Signal strength</span>
             <span className="text-sm font-bold text-cyan-200">{scoreLabel(article.finalScore ?? 0)}</span>
@@ -156,100 +304,41 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
         {/* Article content */}
         <article className="min-w-0 space-y-12">
 
-          {/* Introduction */}
+          {/* Introduction — instant from DB */}
           <section>
-            <p className="text-xl leading-[1.85] text-zinc-200">{clean(deep.introduction)}</p>
+            <p className="text-xl leading-[1.85] text-zinc-200">{clean(article.summary)}</p>
           </section>
 
-          {/* TL;DR callout */}
+          {/* TL;DR callout — instant from DB */}
           <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-6">
             <div className="mb-3 text-sm font-bold uppercase tracking-widest text-cyan-300">TL;DR</div>
             <p className="text-lg leading-relaxed text-zinc-100">{clean(article.summary)}</p>
           </div>
 
-          {/* What Happened */}
+          {/* What Happened — instant from DB */}
           <section>
             <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-zinc-500">What happened</h2>
-            <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.what_happened_deep)}</p>
+            <p className="text-lg leading-[1.9] text-zinc-300">{clean(article.whatHappened ?? article.summary)}</p>
           </section>
 
-          <div className="h-px bg-white/5" />
+          {/* Why it matters — instant from DB */}
+          {article.whyItMatters && (
+            <section>
+              <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-zinc-500">Why it matters</h2>
+              <p className="text-lg leading-[1.9] text-zinc-300">{clean(article.whyItMatters)}</p>
+            </section>
+          )}
 
-          {/* The Bigger Picture */}
-          <section>
-            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-lime-400">The bigger picture</h2>
-            <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.bigger_picture)}</p>
-          </section>
-
-          <div className="h-px bg-white/5" />
-
-          {/* Technical Deep Dive */}
-          <section>
-            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-purple-400">Technical deep dive</h2>
-            <p className="text-lg leading-[1.9] text-zinc-300">{clean(deep.technical_deep_dive)}</p>
-          </section>
-
-          <div className="h-px bg-white/5" />
-
-          {/* Real-world applications */}
-          <section>
-            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-amber-400">Real-world applications</h2>
-            <div className="space-y-4">
-              {deep.real_world_applications.map((app, i) => (
-                <div key={i} className="flex gap-4 rounded-xl border border-white/5 bg-white/5 p-5">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/20 text-xs font-bold text-amber-300">
-                    {i + 1}
-                  </span>
-                  <p className="text-base leading-relaxed text-zinc-300">{clean(app)}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <div className="h-px bg-white/5" />
-
-          {/* What to do now */}
-          <section>
-            <h2 className="mb-5 text-sm font-bold uppercase tracking-widest text-cyan-400">What to do now</h2>
-            <div className="space-y-4">
-              {deep.what_to_do_now.map((action, i) => (
-                <div key={i} className="flex gap-4 items-start">
-                  <svg className="mt-1.5 shrink-0 text-cyan-400" width="16" height="16" viewBox="0 0 14 14" fill="none">
-                    <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <p className="text-base leading-relaxed text-zinc-200">{clean(action)}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Source CTA */}
-          <div className="rounded-3xl border border-white/5 bg-white/5 p-8 text-center">
-            <p className="text-sm text-zinc-400">Go deeper - read the original source</p>
-            <a
-              href={article.url}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-7 py-3 text-sm font-bold text-black transition-opacity hover:opacity-90"
-            >
-              Open {article.source}
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M4 10L10 4M10 4H6.5M10 4V7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </a>
-            <div className="mt-4">
-              <Link href="/feed" className="text-xs text-zinc-500 hover:text-zinc-300">
-                Back to all signals
-              </Link>
-            </div>
-          </div>
+          {/* Deep AI sections — streamed in via Suspense */}
+          <Suspense fallback={<DeepContentSkeleton url={article.url} source={article.source} />}>
+            <DeepContent article={article} />
+          </Suspense>
         </article>
 
-        {/* Sticky sidebar */}
+        {/* Sticky sidebar — instant from DB */}
         <aside className="hidden lg:block">
           <div className="sticky top-16 space-y-4">
 
-            {/* Signal metadata */}
             <div className="rounded-2xl border border-white/5 bg-white/5 p-5">
               <div className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 mb-4">Signal metadata</div>
               <div className="space-y-3 text-sm">
@@ -292,7 +381,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* View source */}
             <a
               href={article.url}
               target="_blank"
